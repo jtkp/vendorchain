@@ -41,13 +41,14 @@ const CreateContractModal = ({ setContracts }) => {
   }
 
   const createNewContract = (value) => {
-    const body = JSON.stringify({
-      name: value
+    const newC = JSON.stringify({
+      name: value,
+      status: 'Not deployed'
     })
     // TODO: push the contract to db
-    localStorage.setItem('contract', body);
+    localStorage.setItem('contract', newC);
     alert('Successfully create contract ' + value);
-    setContracts([{name: value}]);
+    setContracts([JSON.parse(newC)]);
   }
 
   return (

@@ -87,7 +87,7 @@ const Dashboard = () => {
                           >
                               <ListItemText
                                 primary={c.name}
-                                seconday={'Other info'}
+                                secondary={c.status}
                               />
                               <ListItemSecondaryAction>
                                 <IconButton edge="end" aria-label="delete">
