@@ -29,8 +29,6 @@ const useStyles = makeStyles((theme) => ({
       cursor: 'pointer',
     }
   },
-  
-
 }));
 
 
@@ -40,19 +38,24 @@ const Dashboard = () => {
   const [contracts, setContracts] = React.useState([]);
 
   React.useEffect(() => {
-    if (localStorage.getItem('user')) {
+    const auth = JSON.parse(localStorage.getItem('user'));
+    if (auth != null && auth.login === 'true') {
       // TODO: fetch dashboard info and contracts here
-      const contract = JSON.parse(localStorage.getItem('contract'));
-      console.log(contract);
-      if (contract != null) setContracts([contract]);
+      const storage = JSON.parse(localStorage.getItem('contract'));
+      if (storage.contracts.length > 0) {
+        let tmpContractList = [];
+        storage.contracts.map(c => {
+          console.log(JSON.parse(c));
+          tmpContractList.push(JSON.parse(c));
+        });
+        setContracts(tmpContractList);
+      }
 
     } else {
       alert('Fail to fetch quizzes: Please login again.');
       history.push('/home');
     }
   }, []);
-
-  console.log(contracts);
 
   return (
     <Container>
@@ -63,7 +66,7 @@ const Dashboard = () => {
         localStorage.getItem('user')
           ? (
               <Box>
-                <Subtitle>You currently have xx contracts in total. <br/>Click them to edit the contract, or click the button below to create/import a new contract.</Subtitle>
+                <Subtitle>You currently have {contracts.length} contracts in total. <br/>Click them to edit the contract, or click the button below to create/import a new contract.</Subtitle>
                 <Box 
                   display='flex' 
                   flexDirection='row'
@@ -75,28 +78,32 @@ const Dashboard = () => {
                 </Box>
                   <List>
                     {
-                      contracts.map((c) => {
-                        return (
-                          <Button 
-                            color='primary' 
-                            variant='outlined'
-                            className={classes.root}
-                            // component={ Link } 
-                            href={`/contract/edit/${c.name}`}  
-                            key={c}
-                          >
-                              <ListItemText
-                                primary={c.name}
-                                secondary={c.status}
-                              />
-                              <ListItemSecondaryAction>
-                                <IconButton edge="end" aria-label="delete">
-                                  <DeleteIcon />
-                                </IconButton>
-                              </ListItemSecondaryAction>
-                          </Button>
-                        )
-                      })
+                      contracts.length > 0 
+                      && (
+                        contracts.map((c) => {
+                          return (
+                            <Button 
+                              color='primary' 
+                              variant='outlined'
+                              className={classes.root}
+                              style={{ margin: '10px' }}
+                              // component={ Link } 
+                              href={`/contract/edit/${c.name}`}  
+                              key={c.name}
+                            >
+                                <ListItemText
+                                  primary={c.name}
+                                  secondary={c.status}
+                                />
+                                <ListItemSecondaryAction>
+                                  <IconButton edge="end" aria-label="delete">
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </ListItemSecondaryAction>
+                            </Button>
+                          )
+                        })
+                      )
                     }
                   </List>
               </Box>

@@ -63,14 +63,18 @@ const Register = () => {
       const body = JSON.stringify({
         email: values.email,
         password: values.password,
-        // name: values.username,
+        name: values.username,
+        login: 'true',
       })
 
       // TODO: handle register
       history.push('/dashboard');
       localStorage.clear();
       localStorage.setItem('user', body);
-      localStorage.setItem('contract', '{}');
+      const emptyContractList = {
+        contracts: []
+      }
+      localStorage.setItem('contract', JSON.stringify(emptyContractList));
     },
   });
 
