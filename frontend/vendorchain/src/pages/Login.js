@@ -50,15 +50,24 @@ import {
     const history = useHistory();
   
     const handleLogin = (values, { setSubmitting }) => {
-      const body = JSON.stringify({
-        email: values.email,
-        password: values.password,
-      })
       // TODO: handle login
-      localStorage.clear();
-      localStorage.setItem('user', body);
-      localStorage.setItem('contract', '{}');
-      history.push('/dashboard');
+      const auth = JSON.parse(localStorage.getItem('user'));
+
+      if (auth === null) {
+        alert("Please register first");
+        setSubmitting(false);
+
+      // console.log(values.email, values.password, auth.email, auth
+      } else if (auth.email !== values.email || auth.password !== values.password){
+        alert('Incorrect email or password, please try again.');
+        setSubmitting(false);
+      } else {
+        const userInfo = JSON.parse(localStorage.getItem('user'));
+        userInfo.login = 'true';
+        localStorage.setItem('user', JSON.stringify(userInfo));
+        alert("Login successfully, directing to dashboard");
+        history.push('/dashboard');
+      }
     }
   
     return (

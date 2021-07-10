@@ -27,7 +27,9 @@ const AppHeader = ({ logout }) => {
   // Handle logout button, clear localstorage and reset current page
   const handleLogout = () => {
     // FIXME: use api to backend
-    localStorage.removeItem('user');
+    let userInfo = JSON.parse(localStorage.getItem('user'));
+    userInfo.login = 'false';
+    localStorage.setItem('user', JSON.stringify(userInfo));
     logout();
   }
 
@@ -38,7 +40,7 @@ const AppHeader = ({ logout }) => {
           Vendorchain
         </Typography>
           {
-            localStorage.getItem('user')
+            localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).login === 'true'
               /* if not logged in, show login/register button */
               ? (
                   <div>

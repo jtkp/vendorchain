@@ -26,7 +26,7 @@ function App() {
   React.useEffect(() => {
     if (localStorage.getItem('user') != null) setLogin(true);
     console.log(login);
-  }, []);
+  }, [login]);
 
   const logout = () => setLogin(false);
   
