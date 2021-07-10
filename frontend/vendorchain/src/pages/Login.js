@@ -62,10 +62,10 @@ import {
         alert('Incorrect email or password, please try again.');
         setSubmitting(false);
       } else {
-        localStorage.clear();
         const userInfo = JSON.parse(localStorage.getItem('user'));
         userInfo.login = 'true';
         localStorage.setItem('user', JSON.stringify(userInfo));
+        alert("Login successfully, directing to dashboard");
         history.push('/dashboard');
       }
     }

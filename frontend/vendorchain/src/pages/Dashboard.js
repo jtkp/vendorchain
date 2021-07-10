@@ -63,7 +63,7 @@ const Dashboard = () => {
         Dashboard
       </Title>
       {
-        localStorage.getItem('user')
+        localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).login === 'true'
           ? (
               <Box>
                 <Subtitle>You currently have {contracts.length} contracts in total. <br/>Click them to edit the contract, or click the button below to create/import a new contract.</Subtitle>
@@ -80,7 +80,8 @@ const Dashboard = () => {
                     {
                       contracts.length > 0 
                       && (
-                        contracts.map((c) => {
+                        contracts.map((c, idx) => {
+                          console.log(c)
                           return (
                             <Button 
                               color='primary' 
@@ -89,7 +90,7 @@ const Dashboard = () => {
                               style={{ margin: '10px' }}
                               // component={ Link } 
                               href={`/contract/edit/${c.name}`}  
-                              key={c.name}
+                              key={idx}
                             >
                                 <ListItemText
                                   primary={c.name}
