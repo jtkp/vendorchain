@@ -56,7 +56,7 @@ const Dashboard = () => {
       history.push('/home');
     }
   }, []);
-
+  console.log(localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).login === 'true')
   return (
     <Container>
       <Title>

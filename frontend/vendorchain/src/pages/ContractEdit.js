@@ -61,13 +61,13 @@ return (
                     <Typography variant='body1'>xxxxxxxx-xxxxxxxx-xxxxxxxx-xxxxxxxx</Typography>
                     <hr />
                     <Typography variant='h5'>Parties</Typography>
-                    <Typography varaint='body1'>
-                        <ul>
+                    <ul>
+                        <Typography varaint='body1'>
                             <li>Company 1</li>
                             <li>Company 2</li>
                             <li>Company 3</li>
-                        </ul>
-                    </Typography>
+                        </Typography>
+                    </ul>
                 </Grid>
                 <Grid item xs={12} md={6} lg={6} style={outline}>
                     <Box
