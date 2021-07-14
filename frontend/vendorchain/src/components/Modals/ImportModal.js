@@ -64,7 +64,7 @@ const ImportModal = ({ contracts, setContracts }) => {
         onClick={handleClickOpen}
         variant="outlined"
         color="primary">
-        Import Quiz
+        Import Contract
       </Button>
       <Dialog
         open={open}
