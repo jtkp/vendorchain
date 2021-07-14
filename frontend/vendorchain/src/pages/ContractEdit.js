@@ -12,9 +12,8 @@ import { Formik } from 'formik';
 // import { makeStyles } from '@material-ui/core/styles';
 import styled from 'styled-components';
 import { Link, useHistory } from 'react-router-dom';
-// import styles from './styles.css';
 import Title from '../components/Titles/Title';
-import ConditionsForm from '../components/ConditionsForm';
+import Conditionsitem from '../components/ConditionsItem';
 
 const StyledLayout = styled.div`
     display: flex;
@@ -23,15 +22,14 @@ const StyledLayout = styled.div`
     margin: 20px;
 `;
 
-const outline = {
-    // border: '1px solid gray'
-}
-
-
 
 const ContractEdit = () => {
+
     // const classes = useStyles();
     const history = useHistory();
+    const [conditions, setConditions] = React.useState([]);
+    const [id, setId] = React.useState(0);
+
     // const handleSubmit = (values, { setSubmitting }) => {
     //     const body = JSON.stringify({
             
@@ -39,19 +37,37 @@ const ContractEdit = () => {
     //     // TODO: submit a new contract
     // }
 
+    const conditionObj = {
+        id: id,
+        categories: '',
+        operator: '',
+        input: 0,
+    }
+
+    const addCondition = () => {
+        setConditions([...conditions, conditionObj]);
+        setId(id + 1);
+    }
+    const removeCondition = (e) => {
+        const newConditions = [...conditions];
+        //TODO:
+        // conditions.splice(conditions.indexOf(e.target), 1);
+        setConditions(newConditions);
+    }
+
     React.useEffect(() => {
         // TODO: fetch conditions from database
 
     }, []);
 
-
+    console.log("conditions: ", conditions)
 
 return (
     <Container component="main" maxWidth="lg">
         <StyledLayout>
             <Title>Edit Contract (TODO)</Title>
             <Grid container spacing={3}>
-                <Grid item xs={12} md={6} lg={6} style={outline}>
+                <Grid item xs={12} md={6} lg={6}>
                     <Typography variant='h4'>Details</Typography>
                     <hr />
                     <Typography variant='h5'>Description</Typography>
@@ -69,7 +85,7 @@ return (
                         </Typography>
                     </ul>
                 </Grid>
-                <Grid item xs={12} md={6} lg={6} style={outline}>
+                <Grid item xs={12} md={6} lg={6}>
                     <Box
                         display='flex'
                         flexDirection='column'
@@ -82,9 +98,27 @@ return (
                         <Button variant='outlined' color='secondary' size='large'>Delete</Button>
                     </Box>
                 </Grid>
-                <Grid item xs={12} md={12} lg={12} style={outline}>
+                <Grid item xs={12} md={12} lg={12}>
                     
-                    <ConditionsForm />
+                    <Button
+                        variant='outlined' 
+                        color='primary' 
+                        size='large' 
+                        style={{width:'100%'}}
+                        onClick={addCondition}
+                    >
+                        Add conditions
+                    </Button>
+                    <Box
+                        display='flex'
+                        flexDirection='column'
+                        width='100%'
+                    >
+                        {
+                            conditions.map((c, idx) => <Conditionsitem condition={c} idx={idx} key={idx} removeCondition={removeCondition} />)
+                        }
+                    </Box>
+
 
                 </Grid>
             </Grid>

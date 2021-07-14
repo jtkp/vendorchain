@@ -9,7 +9,8 @@ import {
     FormHelperText,
     InputLabel,
     TextField,
-    IconButton
+    IconButton,
+    Typography
 } from '@material-ui/core';
 import DeleteIcon from '@material-ui/icons/Delete';
 
@@ -28,12 +29,14 @@ const useStyles = makeStyles((theme) => ({
 
 const Conditionsitem = ({ condition, idx, removeCondition }) => {
   const classes = useStyles();
+  const [id, setId] = React.useState(-1); 
   const [category, setCategory] = React.useState('');
   const [operator, setOperator] = React.useState('');
   const [number, setNumber] = React.useState(0);
 
 
   React.useEffect(() => {
+    setId(condition.id);
     setCategory(condition.categories);
     setOperator(condition.operator);
     setNumber(condition.input);
@@ -47,9 +50,9 @@ const Conditionsitem = ({ condition, idx, removeCondition }) => {
         variant='outlined'
         style={{ marginTop: '10px', marginBottom: '10px', padding: '20px'}}
     >
+        <Typography variant="h6">id = {id}</Typography>
         <Box display='flex' flexDirection='row' justifyContent='space-between'>
-            <form>
-            <FormControl className={classes.formControl}>
+                <FormControl className={classes.formControl}>
                     <InputLabel id="category-label">Category</InputLabel>
                     <Select
                         labelId="categories"
@@ -82,7 +85,7 @@ const Conditionsitem = ({ condition, idx, removeCondition }) => {
                     <FormHelperText>Required</FormHelperText>
                 </FormControl>
                 <FormControl className={classes.formControl}>
-                    <InputLabel id="number-label">Value</InputLabel>
+                    <InputLabel id="number-label" />
                     <TextField
                         id="number"
                         label="Number"
@@ -95,7 +98,6 @@ const Conditionsitem = ({ condition, idx, removeCondition }) => {
                     />
                     <FormHelperText>Required</FormHelperText>
                 </FormControl>
-            </form>
             <div>
                 <IconButton edge="end" aria-label="delete" onClick={removeCondition}>
                     <DeleteIcon />
