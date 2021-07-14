@@ -70,7 +70,7 @@ const ImportModal = ({ contracts, setContracts }) => {
         open={open}
         onClose={handleClose}
         fullScreen={fullScreen}
-        maxWidth='md'
+        maxWidth='sm'
         fullWidth
         aria-labelledby="create-new-quiz-title"
       >
