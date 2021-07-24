@@ -13,7 +13,7 @@ const pool = new Pool({
 // console.log(uuid());
 /* ================================ Users ================================*/
 
-// get all users
+// TODO: get all users - Katrina
 const getUsers = (request, response) => {
   pool.query('SELECT * FROM users ORDER BY "userID" ASC', (error, results) => {
     if (error) {
@@ -24,6 +24,7 @@ const getUsers = (request, response) => {
   })
 }
 
+// TODO: get a specif user by userId- Katrina
 const getUserById = (request, response) => {
   // get parameters from url
   const id = parseInt(request.params.id);
@@ -37,7 +38,7 @@ const getUserById = (request, response) => {
   })
 }
 
-// add a user
+// TODO: add a user - Katrina
 const createUser = (request, response) => {
   const { name, email, password, isAdmin  } = request.body
 
@@ -56,7 +57,7 @@ const createUser = (request, response) => {
 
 /* ================================ Contracts ================================*/
 
-// get all contracts
+// TODO: get all contracts - Katrina
 const getContracts = (request, response) => {
   pool.query('SELECT * FROM contract ORDER BY "contractID" ASC', (error, results) => {
     if (error) {
@@ -67,7 +68,7 @@ const getContracts = (request, response) => {
   })
 }
 
-// TODO: get user by a specific id
+// TODO: get user by a specific id - Katrina
 const getContractById = (request, response) => {
   // get parameters from url
   const id = parseInt(request.params.id)
@@ -84,7 +85,7 @@ const getContractById = (request, response) => {
   })
 }
 
-// TODO: get all contracts created by a specific user
+// TODO: get all contracts created by a specific user - Katrina
 const getContractsByUserId = (request, response) => {
 // get parameters from url
   const id = parseInt(request.params.userId)
@@ -101,7 +102,7 @@ const getContractsByUserId = (request, response) => {
   })
 }
 
-// TODO: create a contract
+// TODO: create a contract - Katrina
 const createContract = (request, response) => {
   const { title, description, userId  } = request.body
 
@@ -119,7 +120,7 @@ const createContract = (request, response) => {
   })
 }
 
-// TODO: get all contrac
+// TODO: get all contracts - Sang
 const updateContract = (request, response) => {
   const id = parseInt(request.params.id)
 
@@ -134,7 +135,7 @@ const updateContract = (request, response) => {
 
 }
 
-// TODO: update state of a contract
+// TODO: update state of a contract - Sang
 const updateContractState = (request, response) => {
   const id = parseInt(request.params.id);
   const { newState } = request.body;
@@ -151,7 +152,7 @@ const updateContractState = (request, response) => {
 
 /* ================================ Conditions ================================*/
 
-// TODO: get all conditions with a contract id
+// TODO: get all conditions with a contract id - Sang
 const getConditions = (request, response) => {
   const contractId = parseInt(request.params.contractId);
 
@@ -164,7 +165,7 @@ const getConditions = (request, response) => {
   })
 }
 
-// TODO: get a specific condition by an condition id
+// TODO: get a specific condition by an condition id - Sang
 const getConditionById = (request, response) => {
   const id = parseInt(request.params.id);
 
@@ -178,7 +179,7 @@ const getConditionById = (request, response) => {
 
 }
 
-// TODO: add a condition into database
+// TODO: add a condition into database - Sang
 const addCondition = (request, response) => {
   // get data from request.body
 
@@ -192,7 +193,7 @@ const addCondition = (request, response) => {
 
 }
 
-// TODO: udpate a specif condition
+// TODO: udpate a specif condition - Sang
 const updateConditionById = (request, response) => {
   const id = parseInt(request.params.id);
 
