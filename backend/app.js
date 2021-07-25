@@ -24,6 +24,7 @@ app.get('/', (req, res) => {
 /* ================================ Users ================================*/
 app.get('/users', db.getUsers);
 app.get('/user/:id', db.getUserById);
+app.get('/user', db.getUserByEmail);
 app.post('/user', db.createUser);
 
 /* ================================ Contracts ================================*/
