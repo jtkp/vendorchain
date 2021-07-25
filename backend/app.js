@@ -37,7 +37,7 @@ app.put('contract/state/:id', db.updateContractState);
 
 /* ================================ Conditions ================================*/
 app.get('/conditions/:contractId', db.getConditions);
-app.get('/condition/:id', db.getConditionById); // not sure if it's neccessary to get an individual condition
+app.get('/condition/:id', db.getConditionById); 
 app.post('/condition', db.addCondition);
 app.put('/condition/:id', db.updateConditionById);
 

@@ -111,6 +111,20 @@ const getContractsByUserId = (request, response) => {
   })
 }
 
+const deleteContractById = (request, response) => {
+  const id = parseInt(request.params.id);
+
+  pool.query(`DELETE FROM contract where "contractID = ${id}`,
+            (error, results) => {
+
+    if (error) {
+      response.status(400).json(error);
+    } else {
+      response.status(200).send(results.rows)
+    }
+  })
+}
+
 // TODO: create a contract - Katrina
 const createContract = (request, response) => {
   const { title, description, userId  } = request.body
@@ -226,6 +240,7 @@ module.exports = {
   getContracts,
   getContractById,
   getContractsByUserId,
+  deleteContractById,
   createContract,
   updateContract,
   updateContractState,
