@@ -8,9 +8,6 @@ const pool = new Pool({
   port: 5432,
 })
 
-// packages
-// const uuid = require("uuid");
-// console.log(uuid());
 /* ================================ Users ================================*/
 
 // get all users - Katrina
@@ -40,7 +37,7 @@ const getUserByEmail = (request, response) => {
 // get a specif user by userId- Katrina
 const getUserById = (request, response) => {
   // get parameters from url
-  const id = parseInt(request.params.id);
+  const id = request.params.id;
 
   pool.query(`SELECT * FROM users WHERE "userID" = ${id}`, (error, results) => {
     if (error) {
@@ -61,7 +58,7 @@ const createUser = (request, response) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send(`User added with ID: ${result.insertId}`)
+      response.status(200).send({ userId: result.userId })
     }
   })
 }
@@ -82,7 +79,7 @@ const getContracts = (request, response) => {
 // get contract by a specific contract id - Katrina
 const getContractById = (request, response) => {
   // get parameters from url
-  const id = parseInt(request.params.id)
+  const id = request.params.id;
 
   pool.query(`SELECT * FROM contract WHERE "contractID" = ${id}`,
               (error, results) => {
@@ -95,10 +92,10 @@ const getContractById = (request, response) => {
   })
 }
 
-// TODO: get all contracts created by a specific user - Katrina
+// get all contracts created by a specific user - Katrina
 const getContractsByUserId = (request, response) => {
-// get parameters from url
-  const id = parseInt(request.params.userId)
+  // get parameters from url
+  const id = request.params.userId;
 
   pool.query(`SELECT * FROM contract WHERE "owner" = ${id}`,
               (error, results) => {
@@ -111,8 +108,28 @@ const getContractsByUserId = (request, response) => {
   })
 }
 
+//  get the parties from contract with a specific id - Katrina
+const getParties  = (request, response) => {
+  const id = request.params.id;
+
+  pool.query(`SELECT u.name, u.email
+              FROM party p
+              INNER JOIN contract c on 'c.contractID' = 'p.contractID'
+              INNER JOIN userinfo u on 'partyID' = 'userID'
+              WHERE 'c.contractID' = ${id}`,
+              (error, results) => {
+    
+    if (error) {
+      response.status(400).json(error);
+    } else {
+      response.status(200).send(results.rows);
+    }
+  });
+}
+
+// delete contract by id - Katrina
 const deleteContractById = (request, response) => {
-  const id = parseInt(request.params.id);
+  const id = request.params.id;
 
   pool.query(`DELETE FROM contract where "contractID = ${id}`,
             (error, results) => {
@@ -120,7 +137,30 @@ const deleteContractById = (request, response) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send(results.rows)
+      response.status(200).send(`Contract ${id} has been deleted`);
+    }
+  })
+}
+
+const inviteParties = (request, response) => {
+  const { contractId, partiesId } = request.body;
+
+  let query = "INSERT INTO parties (partyID, contractID) VALUES";
+
+  partiesId.map((p) => {
+    query += ` ('${p}','${contractId}'),`;
+  });
+
+  query = query.slice(0, -1);
+  query += ';';
+  console.log(query);
+
+  pool.query(query, (error, results) => {
+
+    if (error) {
+      response.status(400).json(error);
+    } else {
+      response.status(200).send(`Successfully invite parties ${partiesId}`);
     }
   })
 }
@@ -136,7 +176,7 @@ const createContract = (request, response) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send(`Contract ${title} added with ID: ${result.insertId}`)
+      response.status(200).send({ contractId: result.contractId })
     }
   })
 }
@@ -228,6 +268,20 @@ const updateConditionById = (request, response) => {
 
 }
 
+// delete a condition 
+const deleteConditionById = (request, response) => {
+  const id = parseInt(request.params.id);
+
+  pool.query(`DELETE FROM condition where "conditionID = ${id}`,
+            (error, results) => {
+
+    if (error) {
+      response.status(400).json(error);
+    } else {
+      response.status(200).send(`Condition ${id} has been deleted`);
+    }
+  })
+}
 
 
 module.exports = {
@@ -240,7 +294,9 @@ module.exports = {
   getContracts,
   getContractById,
   getContractsByUserId,
+  getParties,
   deleteContractById,
+  inviteParties,
   createContract,
   updateContract,
   updateContractState,
@@ -249,4 +305,5 @@ module.exports = {
   getConditionById,
   addCondition,
   updateConditionById,
+  deleteConditionById,
 }
