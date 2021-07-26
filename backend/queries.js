@@ -120,32 +120,34 @@ const createContract = (request, response) => {
   })
 }
 
-// TODO: get all contracts - Sang
+// TODO: update all contracts - Sang
 const updateContract = (request, response) => {
-  const id = parseInt(request.params.id)
+  const contractId = parseInt(request.params.contractId);
+  const { newTitle, newDescription, newAddress } = request.body;
 
   // Use UPDATE keyword
-  pool.query('', (error, results) => {
+  pool.query('UPDATE contract SET title = newTitle, description = newDescription, address = newAddress WHERE "contractID" = ${contractId}', (error, results) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send(`Contract updated with ID: ${id}`);
+      response.status(200).send(`Contract updated with ID: ${contractId}`);
     }
   })
 
 }
 
+
 // TODO: update state of a contract - Sang
 const updateContractState = (request, response) => {
-  const id = parseInt(request.params.id);
+  const contractId = parseInt(request.params.contractId);
   const { newState } = request.body;
 
   // Use UPDATE keyword
-  pool.query('', (error, results) => {
+  pool.query('UPDATE contract SET state = newState WHERE "contractID" = ${contractId}', (error, results) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send(`Contract ${id} has updated to state ${newState}`);
+      response.status(200).send(`Contract ${contractId} has updated to state ${newState}`);
     }
   })
 }
@@ -156,7 +158,7 @@ const updateContractState = (request, response) => {
 const getConditions = (request, response) => {
   const contractId = parseInt(request.params.contractId);
 
-  pool.query('', (error, results) => {
+  pool.query('SELECT * FROM condition WHERE "contractID" = ${contractId} ORDER BY "contractID" ASC', (error, results) => {
     if (error) {
       response.status(400).json(error);
     } else {
@@ -167,9 +169,9 @@ const getConditions = (request, response) => {
 
 // TODO: get a specific condition by an condition id - Sang
 const getConditionById = (request, response) => {
-  const id = parseInt(request.params.id);
+  const conditionId = parseInt(request.params.id);
 
-  pool.query('', (error, results) => {
+  pool.query('SELECT * FROM condition WHERE "conditionID" = ${conditionId} ORDER BY "conditionID" ASC', (error, results) => {
     if (error) {
       response.status(400).json(error);
     } else {
@@ -181,9 +183,11 @@ const getConditionById = (request, response) => {
 
 // TODO: add a condition into database - Sang
 const addCondition = (request, response) => {
+    const { newDescription, newCategory, newOperator, newValue } = request.body
   // get data from request.body
 
-  pool.query('', (error, results) => {
+  pool.query('INSERT INTO condition (description, category, operator, value) VALUES (newDescription, newCategory, newOperator, newValue)',
+              (error, results) => {
     if (error) {
       response.status(400).json(error);
     } else {
@@ -193,15 +197,16 @@ const addCondition = (request, response) => {
 
 }
 
-// TODO: udpate a specif condition - Sang
+// TODO: udpate a specific condition - Sang
 const updateConditionById = (request, response) => {
-  const id = parseInt(request.params.id);
+  const conditionId = parseInt(request.params.conditionId);
+  const { newDescription, newCategory, newOperator, newValue } = request.body;
 
-  pool.query('', (error, results) => {
+  pool.query('UPDATE contract SET description = newDescription, category = newCategory, operator = newOperator, value = newValue WHERE "conditionID" = ${conditionId}', (error, results) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send(`Condition has been updated with ID: ${id}`);
+      response.status(200).send(`Condition has been updated with ID: ${conditionId}`);
     }
   })
 
