@@ -1,21 +1,16 @@
-const { response } = require('express')
+const { response } = require('express');
 
 // set up express app
-const express = require('express')
-const bodyParser = require('body-parser')
-const app = express()
-const port = 3000
+const express = require('express');
+const app = express();
+const port = 3000;
 
-app.use(bodyParser.json())
-app.use(
-  bodyParser.urlencoded({
-    extended: true,
-  })
-)
+app.use(express.urlencoded({extended: true}));
+app.use(express.json());
 
 // connect db
-const db = require('./queries')
-
+const db = require('./queries');
+const oracle = require('./oracle');
 
 app.get('/', (req, res) => {
   res.json({info: 'hello world'})
@@ -46,6 +41,10 @@ app.post('/condition', db.addCondition);
 app.put('/condition/:id', db.updateConditionById);
 app.delete('/condition/:id', db.deleteConditionById);
 
-app.listen(port, () => {
+
+/* ================================ Oracle ================================*/
+app.post('/oracle', oracle.verify);
+
+app.listen(port,'0.0.0.0',() => {
   console.log(`Vendorchain db listening at http://localhost:${port}`)
 })
