@@ -1,2 +1,10 @@
 1. Compile and store in build
 2. Provide interface to each to the contracts
+
+1. Oracle provide api in backend
+2. Called /oracle
+    The oracle calls the function verify(request)
+    1. Checks the source of the requests
+    2. Check if the source is a trustable source
+3. Then proceeds to send the data onchain
+    

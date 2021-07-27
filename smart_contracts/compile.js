@@ -1,6 +1,7 @@
-const path = require('path');
-const solc = require('solc');
-const fs = require('fs-extra');
+const process = require('process');
+const solc    = require('solc');
+const path    = require('path');
+const fs      = require('fs-extra');
 
 // INPUT: .sol file in "smart_contract"
 // OUTPUT: The contents of "smart_contracts/importPath" 
@@ -47,6 +48,19 @@ const compiled = compileSols(["temp","temp2"]);
 if ("errors" in compiled){
     console.log("Compilation failed");
     console.log(compiled.errors);
-    return;
+    process.exit(1);
 } 
-console.log(compiled);
+
+const contracts = compiled.contracts;
+const buildPath = path.resolve(__dirname, 'build');
+fs.removeSync(buildPath);
+fs.ensureDirSync(buildPath);
+
+// Store contracts?
+for (let contract in contracts) {
+    fs.outputJsonSync(
+      path.resolve(buildPath, contract.replace(':', '') + '.json'),
+      contracts[contract]
+    );
+  }
+process.exit();
