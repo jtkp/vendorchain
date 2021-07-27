@@ -44,7 +44,7 @@ const compileSols = (solNames) => {
     return output;
 }
 
-const compiled = compileSols(["temp","temp2"]);
+const compiled = compileSols(["Temp","Temp2"]);
 if ("errors" in compiled){
     console.log("Compilation failed");
     console.log(compiled.errors);
@@ -57,10 +57,10 @@ fs.removeSync(buildPath);
 fs.ensureDirSync(buildPath);
 
 // Store contracts?
-for (let contract in contracts) {
+for (let contract in contracts) { 
     fs.outputJsonSync(
       path.resolve(buildPath, contract.replace(':', '') + '.json'),
-      contracts[contract]
+      contracts[contract][contract]
     );
   }
 process.exit();

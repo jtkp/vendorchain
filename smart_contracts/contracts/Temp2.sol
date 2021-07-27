@@ -9,7 +9,7 @@ pragma solidity >=0.7.0 <0.9.0;
 contract Temp2 {
 
     uint256 number;
-
+    
     /**
      * @dev Store value in variable
      * @param num value to store
