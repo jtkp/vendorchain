@@ -6,19 +6,20 @@ pragma solidity ^0.8.4;
 
 /// @title Contract that handles automated payment, considering if conditions are satisfied
 contract Vendor {
+    address public admin;
+    address payable public client;
+    address payable public payee;
+    bool public payeeApproved;
+    
     enum Stages {
         Initialising,
+        Pending,
         Inactive,
-        Active
+        Active,
+        Expired
     }
     Stages public stage = Stages.Initialising;
 
-    address public manager;
-    address payable public client;
-    address payable public payee;
-
-    string public title;
-    string public description;
     uint public creationDate;
     uint public expiryDate;
     uint public amount;
@@ -32,8 +33,8 @@ contract Vendor {
     // but will require multiple small transactions to populate list of conditions
     struct Conditions {
         string name;
-        int mode;
         int value;
+        int operator;
     }
     Conditions[] public conditionArray;
     mapping (string => int) private operators;
@@ -47,16 +48,14 @@ contract Vendor {
     int private count;                              // keeps track of how many times values were received
 
     // contract is satisfied/unsatisfied at end of valid period
-    event State(address indexed sender, bool isSatisfied);
+    event State(address indexed sender, bool isSatisfied, string message);
 
     ////////////////////////////////////////////
     ////////////// INITIALISATION //////////////
     ////////////////////////////////////////////
 
-    constructor(string memory _title, string memory _description, address _manager, address _client, address _payee, uint _createdOn, uint _expiredOn, uint _prevBillingDate, uint _nextBillingDate, uint _contractHash, uint _amount) {
-        title = _title;
-        description = _description;
-        manager = _manager;
+    function init(address _client, address _payee, uint _createdOn, uint _expiredOn, uint _prevBillingDate, uint _nextBillingDate, uint _contractHash, uint _amount) public {
+        admin = msg.sender;
         client = payable(_client);
         payee = payable(_payee);
         creationDate = _createdOn;
@@ -65,9 +64,16 @@ contract Vendor {
         nextBillingDate = calcDate(_nextBillingDate);
         contractHash = _contractHash;
         amount = _amount;
+        initOperators();
+    }
 
-        // init operators
-        // >=, <=, ==, <, >
+    function initOperators() private {
+        operators['>'] = 1;
+        operators['=='] = 2;
+        operators['=>'] = 3;
+        operators['<'] = 4;
+        operators['!='] = 5;
+        operators['<='] = 6;
     }
 
     // calculate the block number equivalent to a timestamp
@@ -77,18 +83,18 @@ contract Vendor {
     }
 
     // todo: set so only VendorFactory can call this
-    function setConds(string[8] memory _names, int[8] memory _values, int[8] memory _modes) external atStage(Stages.Initialising) {
+    function setConds(string[8] memory _names, int[8] memory _values, string[8] memory _operators) external atStage(Stages.Initialising) {
         for (uint i = 0; i < 8; i++) {
             if (keccak256(bytes(_names[i])) == keccak256(bytes("None"))) {
                 endInitStage();
                 return;     // break out of loop when received condition name equals "None"
             }
-            conditionArray.push(Conditions(_names[i], _values[i], _modes[i]));
+            conditionArray.push(Conditions(_names[i], _values[i], operators[_operators[i]]));
         }
     }
 
     function endInitStage() public atStage(Stages.Initialising) {
-        stage = Stages.Inactive;
+        stage = Stages.Pending;
 
         // initialise the service data mapping
         for (uint i = 0; i < conditionArray.length; i++) {
@@ -96,37 +102,46 @@ contract Vendor {
         }
     }
 
-    function setActive() external atStage(Stages.Inactive) {
-        stage = Stages.Active;
-    }
+    ////////////////////////////////////////////
+    ///////////////// PENDING //////////////////
+    ////////////////////////////////////////////
 
-    function setInactive() external atStage(Stages.Active) {
-        stage = Stages.Inactive;
+    // Assumes client has already approved because the contract is deployed.
+    function approve() external atStage(Stages.Pending) {
+        require(msg.sender == admin, "Cannot call this function directly, use VendorFactory.");
+        payeeApproved = true;
+        stage = Stages.Active;
     }
     
     ////////////////////////////////////////////
     ////////// DEPLOYED FUNCTIONALITY //////////
     ////////////////////////////////////////////
 
-    function payContract() external payable atStage(Stages.Active) checkBillingDate() {
+    function storePayment() external payable atStage(Stages.Active) checkBillingDate() {
         if (msg.value != amount) {
             revert();
         }
     }
 
-    function balanceOf() external view atStage(Stages.Active) returns (uint) {
+    function balanceOf() external view returns (uint) {
         return address(this).balance;
     }
     
     // todo: what happens when there is no stored balance in the contract???
     function payVendor() private {
         payee.transfer(amount);
-        // todo: automated billing date adjustment here??
+        setNewDates();
     }
     
     function refund() private {
         client.transfer(amount);
-        // todo: automated billing date adjustment here??
+        setNewDates();
+    }
+
+    function setNewDates() private checkExpiry() {
+        satisfied = false;
+        prevBillingDate = nextBillingDate;
+        nextBillingDate = nextBillingDate + 30 * blocksDaily;
     }
 
     // Allows off-chain to push data onto the blockchain.
@@ -142,44 +157,60 @@ contract Vendor {
     // Calculates if the contract terms have been satisfied after next billing date has been passed.
     function isSatisfied() private atStage(Stages.Active) {
         for (uint i = 0; i < conditionArray.length; i++) {
-            int mode = conditionArray[i].mode;
+            int operator = conditionArray[i].operator;
             int value = conditionArray[i].value;
-            int _value = cumulative[i]/count;
+            int _toCheck = cumulative[i]/count;
             
-            if (!condValid(mode, _value, value)) {
+            if (!condValid(operator, _toCheck, value)) {
                 refund();
-                emit State(msg.sender, satisfied);
+                emit State(msg.sender, satisfied, "Refunding payment.");
                 return;
             }
         }
         satisfied = true;
-        emit State(msg.sender, satisfied);
+        emit State(msg.sender, satisfied, "Sending payment.");
         
-        // Automatically attempts to make payment.
+        // Automatically make payment.
         payVendor();
     }
     
-    // mode is checked against binary 111,
+    // operator is checked against binary 111,
     // left bit means less than, middle bit means equal to, right bit means greater than
-    function condValid(int mode, int _value, int value) private pure returns (bool) {
-        if (mode != -1) {
-            if (mode & 1 == 1) {
-                if (!(_value > value)) {
+    function condValid(int operator, int _toCheck, int value) private pure returns (bool) {
+        if (operator != -1) {
+            if (operator & 1 == 1) {
+                if (!(_toCheck > value)) {
                     return false;
                 }
             }
-            if (mode & 2 == 2) {
-                if (!(_value == value)) {
+            if (operator & 2 == 2) {
+                if (!(_toCheck == value)) {
                     return false;
                 }
             }
-            if (mode & 4 == 4) {
-                if (!(_value < value)) {
+            if (operator & 4 == 4) {
+                if (!(_toCheck < value)) {
                     return false;
                 }
             }
         }
         return true;
+    }
+
+    ////////////////////////////////////////////
+    /////////////// CHANGE STATE ///////////////
+    ////////////////////////////////////////////
+
+    function setActive() external atStage(Stages.Inactive) {
+        stage = Stages.Active;
+    }
+
+    function setInactive() external atStage(Stages.Active) {
+        stage = Stages.Inactive;
+    }
+
+    function destroy() external atStage(Stages.Inactive) {
+        selfdestruct(client);
     }
     
     ////////////////////////////////////////////
@@ -198,9 +229,22 @@ contract Vendor {
         }
     }
 
+    // Cannot be expired.
+    modifier checkExpiry() {
+        if (block.number < expiryDate) {
+            _;
+        }
+        stage = Stages.Expired;
+    }
+
     // Has to be in the correct state.
     modifier atStage(Stages _stage) {
         require(stage == _stage, "Contract is not in the required state");
+        _;
+    }
+
+    modifier onlyAdmin() {
+        require(msg.sender == admin, 'Only the admin can use this function');
         _;
     }
 }
