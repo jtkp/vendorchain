@@ -6,13 +6,14 @@ pragma solidity ^0.8.4;
 
 /// @title Contract that handles automated payment, considering if conditions are satisfied
 contract Vendor {
+    
     enum Stages {
         Initialising,
         Inactive,
         Active
     }
-    Stages public stage = Stages.Initialising;
 
+    Stages public stage = Stages.Initialising;
     address public manager;
     address payable public client;
     address payable public payee;
@@ -53,9 +54,7 @@ contract Vendor {
     ////////////// INITIALISATION //////////////
     ////////////////////////////////////////////
 
-    constructor(string memory _title, string memory _description, address _manager, address _client, address _payee, uint _createdOn, uint _expiredOn, uint _prevBillingDate, uint _nextBillingDate, uint _contractHash, uint _amount) {
-        title = _title;
-        description = _description;
+    constructor(address _manager, address _client, address _payee, uint _createdOn, uint _expiredOn, uint _prevBillingDate, uint _nextBillingDate, uint _contractHash, uint _amount) {
         manager = _manager;
         client = payable(_client);
         payee = payable(_payee);
