@@ -93,7 +93,7 @@ const createUser = (request, response) => {
       })
       .catch(err => {
         console.log("ERROR getting eth accounts.");
-        response.status(404).send("ERROR getting eth accoutns");
+        response.status(404).send("ERROR getting eth accounts");
       })
   }
 }
@@ -208,7 +208,7 @@ const createContract = (request, response) => {
         if (error) {
           response.status(400).json(error);
         } 
-        response.status(200).json({ contractID: results.rows[0] });
+        response.status(200).json(results.rows[0]);
       })
 
     })

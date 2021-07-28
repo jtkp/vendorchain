@@ -16,6 +16,13 @@ const CreateContractModal = ({ contracts, setContracts }) => {
   const [open, setOpen] = React.useState(false);
   const [name, setName] = React.useState('');
   const [errorText, setErrorText] = React.useState();
+
+  const [desc, setDesc] = React.useState('');
+
+  const [expiryDate, setExpiryDate] = React.useState(new Date().toISOString().slice(0, 10));
+  const [startDate, setStartDate] = React.useState(new Date().toISOString().slice(0, 10));
+
+  const [amount, setAmount] = React.useState(0);
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -44,15 +51,18 @@ const CreateContractModal = ({ contracts, setContracts }) => {
   const createNewContract = (value) => {
     const newC = JSON.stringify({
       title: value,
-      description: "sample text",
-      userId: JSON.parse(localStorage.getItem('user')).userID,
+      description: desc,
+      client: JSON.parse(localStorage.getItem('user')).address,
+      expiryDate: new Date(expiryDate).getTime() / 1000,
+      startDate: new Date(startDate).getTime() / 1000,
+      amount: amount
     })
 
     makeAPIRequest('contract', 'POST', null, null, newC)
       .then(res => {
         alert('Successfully create contract ' + value);
         return res;
-      }).then (res => setContracts([...contracts, res[0]])
+      }).then (res => setContracts([...contracts, res])
       ).then(() => window.location.reload()
       ).catch(err => {
         console.log(err);
@@ -90,6 +100,45 @@ const CreateContractModal = ({ contracts, setContracts }) => {
             error={Boolean(errorText)}
             helperText={errorText}
             onChange={e => setName(e.target.value)}
+          />
+          <TextField
+            required
+            label="Description"
+            fullWidth
+            error={desc === ''}
+            helperText={desc === '' ? "Description cannot be empty" : ""}
+            onChange={e => setDesc(e.target.value)}
+          />
+          <TextField
+            required
+            label="Start Date"
+            type="date"
+            defaultValue={startDate}
+            error={startDate === ''}
+            helperText={startDate === '' ? "Start date cannot be empty" : ""}
+            onChange={e => setStartDate(e.target.value)}
+          />
+          <br/>
+          <br/>
+          <TextField
+            required
+            label="Expiry Date"
+            type="date"
+            defaultValue={expiryDate}
+            error={expiryDate === ''}
+            helperText={expiryDate === '' ? "Expiry date cannot be empty" : ""}
+            onChange={e => setExpiryDate(e.target.value)}
+          />
+          <br/>
+          <br/>
+          <TextField
+            required
+            label="Payment Amount"
+            type="number"
+            defaultValue="0"
+            error={amount === ''}
+            helperText={amount === '' ? "Payment amount cannot be empty" : ""}
+            onChange={e => setAmount(e.target.value)}
           />
         </DialogContent>
         <DialogActions>

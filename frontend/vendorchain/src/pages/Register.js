@@ -33,7 +33,7 @@ const Register = () => {
     if (!values.username) {
       errors.username = 'Required'
     } else if (
-      /[0-9]+/i.test(values.username)
+      /$[0-9]+^/.test(values.username)
     ) {
       errors.username = 'Username cannot be all numbers'
     }
@@ -70,7 +70,7 @@ const Register = () => {
 
       console.log(JSON.parse(body))
 
-      // TODO: handle register
+      // handle register
       makeAPIRequest('user', 'POST', null, null, body)
         .then(res => {
           localStorage.clear();
@@ -80,7 +80,8 @@ const Register = () => {
           history.push('/dashboard');
         })
         .catch(err => {
-          if (err.status === 404) alert('Email has been used, please try another one');
+          if (err.status === 400) alert('Email has been used, please try another one');
+          else if (err.status === 401) alert('Maximum number of users is reached.')
           else alert('Error occur. Please try again.')
           setSubmitting(false);
         })
