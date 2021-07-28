@@ -75,6 +75,7 @@ const deploy = async () => {
         undefined, {                                    // (Optional) Address of smart contract to call
         data: '0x' + VendorFactoryContract.evm.bytecode.object // The byte code of contract
     });
+    
     // Find estimate gas to deploy Vendor Contract
     estimatedGas = await contract
                   .deploy({ data: contract.options.data, arguments: [emptyVendorContractAddress]})

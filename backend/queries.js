@@ -190,17 +190,28 @@ const createContract = async (request, response) => {
       
       const index = results.rows[0].index;
       console.log("Retrieved contract index");
-      const hash = "";
+      const hash = 100;
       
       const VendorFactory = await eth.VendorFactory();
+      
       console.log("Retrieved Vendor Factory")
       const accounts = await eth.accounts();
-      console.log("Retrieved accounts");
-      console.log(accounts)
-      
       const managerAccount = accounts[0];
-      let res = await VendorFactory.methods.createContract(client, expiryDate, startDate, hash, amount, index).send({"from": managerAccount});
-      console.log("Executed contract")
+
+      console.log("Retrieved accounts");
+
+      console.log("Before create contract")
+      console.log(client)
+      console.log(expiryDate)
+      console.log(startDate)
+      console.log(hash)
+      console.log(amount)
+      console.log(index);
+      const res = await VendorFactory.methods.createVendor(client, expiryDate, startDate, hash, amount, index)
+      .send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
+
+      console.log("After create contract");
+      console.log("Executed contract");
       console.log("Created new vendor contract");
       response.status(200).json({ contractRes: res });
       
@@ -212,6 +223,8 @@ const createContract = async (request, response) => {
       // response.status(200).json({ contractID: results.rows[0] });
       // })
   } catch(err){
+    console.log("error");
+    console.log(err);
     response.status(400).json(err);
   }
   
