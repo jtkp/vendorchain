@@ -177,7 +177,7 @@ const inviteParty = (request, response) => {
 }
 
 // create a contract  - call functions - daigo
-const createContract = async (request, response) => {
+const createContract = (request, response) => {
   const { title
         , description 
         , client
