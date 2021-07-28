@@ -39,7 +39,6 @@ contract Vendor {
     
     // Block calculation.
     uint constant blocksDaily = 6400;                       // Average blocks mined per day
-    uint blocksSecond = blocksDaily/24/60/60;               // Average blocks per second
 
     // Values that conditions will check to see if it is satisfied.
     mapping (uint => int) private cumulative;       // sums all values received during the contract, same length as conditionArray
@@ -57,7 +56,7 @@ contract Vendor {
         expiryDate = _expiredOn;
         startDate = _startDate;
         prevBillingDate = calcDate(_startDate);
-        nextBillingDate = calcDate(_startDate + 30 days);
+        nextBillingDate = calcDate(_startDate + 30);
         contractHash = _contractHash;
         amount = _amount;
         initOperators();
@@ -74,10 +73,10 @@ contract Vendor {
 
     // Calculate the block number equivalent to a timestamp.
     function calcDate(uint _billingDate) private view returns (uint) {
-        uint blockInterval = (_billingDate - block.timestamp)/blocksSecond; // timestamp difference in seconds/blocks per second = blocks from now
+        uint blockInterval = _billingDate/blocksDaily; // timestamp difference in seconds/blocks per second = blocks from now
         return block.number + blockInterval;
     }
-
+    
     function setConds(string[8] memory _names, int[8] memory _values, string[8] memory _operators) external atStage(Stages.Initialising) {
         for (uint i = 0; i < 8; i++) {
             if (bytes(_names[i]).length == 0) {
@@ -115,6 +114,10 @@ contract Vendor {
     ////////////////////////////////////////////
     ////////// DEPLOYED FUNCTIONALITY //////////
     ////////////////////////////////////////////
+
+    function getDetails() external view returns (address, address, uint, uint, uint, uint, uint, uint) {
+        return (client, payee, startDate, expiryDate, amount, prevBillingDate, nextBillingDate, contractHash);
+    }
 
     function storePayment() external payable atStage(Stages.Active) checkBillingDate() {
         if (msg.value != amount) {
