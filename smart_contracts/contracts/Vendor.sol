@@ -21,6 +21,7 @@ contract Vendor {
     Stages public stage = Stages.Initialising;
 
     uint public creationDate;
+    uint public startDate;
     uint public expiryDate;
     uint public amount;
     uint public prevBillingDate;
@@ -54,13 +55,13 @@ contract Vendor {
     ////////////// INITIALISATION //////////////
     ////////////////////////////////////////////
 
-    function init(address _client, address _payee, uint _createdOn, uint _expiredOn, uint _prevBillingDate, uint _nextBillingDate, uint _contractHash, uint _amount) public {
+    function init(address _client, uint _createdOn, uint _expiredOn, uint _startDate, uint _nextBillingDate, uint _contractHash, uint _amount) public {
         admin = msg.sender;
         client = payable(_client);
-        payee = payable(_payee);
         creationDate = _createdOn;
         expiryDate = _expiredOn;
-        prevBillingDate = calcDate(_prevBillingDate);
+        startDate = _startDate;
+        prevBillingDate = calcDate(_startDate);
         nextBillingDate = calcDate(_nextBillingDate);
         contractHash = _contractHash;
         amount = _amount;
@@ -91,6 +92,10 @@ contract Vendor {
             }
             conditionArray.push(Conditions(_names[i], _values[i], operators[_operators[i]]));
         }
+    }
+
+    function setPayee(address _payee) external {
+        payee = payable(_payee);
     }
 
     function endInitStage() public atStage(Stages.Initialising) {
