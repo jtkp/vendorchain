@@ -24,11 +24,14 @@ function App() {
   // check if user is logged in - 
   // FIXME: currently save password into local storage
   React.useEffect(() => {
-    if (localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).login === 'true') setLogin(true);
+    if (localStorage.getItem('user')) setLogin(true);
     console.log(login);
-  }, [localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).login === 'true', login]);
+  }, [login]);
 
-  const logout = () => setLogin(false);
+  const logout = () => {
+    localStorage.removeItem('user');
+    setLogin(false);
+  };
   
   return (
     <div className="App">
@@ -48,7 +51,7 @@ function App() {
                   <Route exact path={`${url}dashboard`} component={Dashboard} />
 
                   {/* Contract edit TODO: use contract id here*/}
-                  <Route exact path={`${url}contract/edit/:name`} component={ContractEdit} />
+                  <Route exact path={`${url}contract/edit/:id`} component={ContractEdit} />
 
                   <Route exact path="*" component={NotFound} />
 

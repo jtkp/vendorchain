@@ -5,6 +5,7 @@ import TextField from '@material-ui/core/TextField';
 import { useFormik } from 'formik';
 import { makeStyles } from '@material-ui/core/styles';
 import Title from '../components/Titles/Title';
+import makeAPIRequest from '../Api';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -25,6 +26,7 @@ const useStyles = makeStyles((theme) => ({
 const Register = () => {
   const history = useHistory();
   const classes = useStyles();
+
   const validate = values => {
     const errors = {};
     // check username format
@@ -61,20 +63,28 @@ const Register = () => {
     validate,
     onSubmit: (values, { setSubmitting }) => {
       const body = JSON.stringify({
+        name: values.username,
         email: values.email,
         password: values.password,
-        name: values.username,
-        login: 'true',
       })
 
+      console.log(JSON.parse(body))
+
       // TODO: handle register
-      history.push('/dashboard');
-      localStorage.clear();
-      localStorage.setItem('user', body);
-      const emptyContractList = {
-        contracts: []
-      }
-      localStorage.setItem('contract', JSON.stringify(emptyContractList));
+      makeAPIRequest('user', 'POST', null, null, body)
+        .then(res => {
+          localStorage.clear();
+          console.log(res)
+          localStorage.setItem('user', JSON.stringify(res));
+          alert("Register successfully, directing to dashboard");
+          history.push('/dashboard');
+        })
+        .catch(err => {
+          if (err.status === 404) alert('Email has been used, please try another one');
+          else alert('Error occur. Please try again.')
+          setSubmitting(false);
+        })
+     
     },
   });
 
@@ -151,12 +161,13 @@ const Register = () => {
                   variant="body1"
                 >
                   Already have an account?
-                  <Link
-                    to="/login"
-                    variant="body1"
-                    style={{ padding: '10px' }}>
+                  <Button
+                    color="primary"
+                    style={{ padding: '10px' }}
+                    onClick={() => history.push('/login')}
+                    >
                     Sign in
-                  </Link>
+                  </Button>
                 </Typography>
               </Grid>
             </Grid>

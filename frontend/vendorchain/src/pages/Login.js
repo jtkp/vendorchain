@@ -8,6 +8,7 @@ import {
   } from '@material-ui/core';
   
   import React from 'react';
+  import axios from "axios";
   import { Formik } from 'formik';
   import PropTypes from 'prop-types';
   // import { makeStyles } from '@material-ui/core/styles';
@@ -15,7 +16,8 @@ import {
   import { Link, useHistory } from 'react-router-dom';
   // import styles from './styles.css';
   import Title from '../components/Titles/Title';
-  
+  import makeAPIRequest from '../Api';
+
   const StyledLayout = styled.div`
     display: flex;
     flex-direction: column;
@@ -48,26 +50,28 @@ import {
   const Login = () => {
     // const classes = useStyles();
     const history = useHistory();
-  
+    
     const handleLogin = (values, { setSubmitting }) => {
-      // TODO: handle login
-      const auth = JSON.parse(localStorage.getItem('user'));
+      makeAPIRequest(`user/email/${values.email}`, 'GET', null, null, null)
+        .then(res => {
+          if (res.length === 0) {
+            alert("Please register first or check email.");
+            setSubmitting(false);
 
-      if (auth === null) {
-        alert("Please register first");
-        setSubmitting(false);
+          } else if (res[0].password === values.password) {
+            localStorage.setItem('user', JSON.stringify(res[0]));
+            alert("Login successfully, directing to dashboard");
+            history.push('/dashboard');
 
-      // console.log(values.email, values.password, auth.email, auth
-      } else if (auth.email !== values.email || auth.password !== values.password){
-        alert('Incorrect email or password, please try again.');
-        setSubmitting(false);
-      } else {
-        const userInfo = JSON.parse(localStorage.getItem('user'));
-        userInfo.login = 'true';
-        localStorage.setItem('user', JSON.stringify(userInfo));
-        alert("Login successfully, directing to dashboard");
-        history.push('/dashboard');
-      }
+          } else {
+            alert('Incorrect password, please try again.')
+            setSubmitting(false);
+          }
+        }).catch(err => {
+          alert('Login failed, please check values and try again.');
+          console.log(err);
+          setSubmitting(false);
+        })
     }
   
     return (

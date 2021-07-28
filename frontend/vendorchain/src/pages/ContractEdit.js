@@ -11,9 +11,10 @@ import React from 'react';
 import { Formik } from 'formik';
 // import { makeStyles } from '@material-ui/core/styles';
 import styled from 'styled-components';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useParams, useHistory } from 'react-router-dom';
 import Title from '../components/Titles/Title';
 import Conditionsitem from '../components/ConditionsItem';
+import makeAPIRequest from '../Api';
 
 const StyledLayout = styled.div`
     display: flex;
@@ -24,11 +25,12 @@ const StyledLayout = styled.div`
 
 
 const ContractEdit = () => {
-
+    const params = useParams();
     // const classes = useStyles();
     const history = useHistory();
     const [conditions, setConditions] = React.useState([]);
-    const [id, setId] = React.useState(0);
+    const [contract, setContract] = React.useState({});
+    const [btnValue, setBtnValue] = React.useState('');
 
     // const handleSubmit = (values, { setSubmitting }) => {
     //     const body = JSON.stringify({
@@ -38,7 +40,6 @@ const ContractEdit = () => {
     // }
 
     const conditionObj = {
-        id: id,
         categories: '',
         operator: '',
         input: 0,
@@ -46,7 +47,6 @@ const ContractEdit = () => {
 
     const addCondition = () => {
         setConditions([...conditions, conditionObj]);
-        setId(id + 1);
     }
     const removeCondition = (e) => {
         const newConditions = [...conditions];
@@ -55,28 +55,71 @@ const ContractEdit = () => {
         setConditions(newConditions);
     }
 
-    React.useEffect(() => {
-        // TODO: fetch conditions from database
+    const handleDelete = (e) => {
+        makeAPIRequest(`contract/${params.id}`, 'DELETE', null, null, null)
+            .then(res => {
+                history.push('/dashboard');
+            })
+            .catch(err => {
+                console.log(err);
+                alert("Fail to delete contract.")
+            })
+    }
 
+    React.useEffect(() => {
+        //  fetch conditions from database
+        makeAPIRequest(`contract/${params.id}`, 'GET', null, null, null) 
+            .then(res => {
+                setContract(res[0]);
+                if (res[0].status === 'Ready') setBtnValue('Deploy');
+                else setBtnValue('Save');
+
+            }).then(
+                makeAPIRequest(`conditions/${params.id}`, 'GET', null, null, null)
+                .then(res => setConditions(res))
+                .catch(err => {
+                    console.log(err);
+                    alert("Error fetching conditions");
+                })
+            )
+            .catch(err => {
+                console.log(err);
+                alert("Error fetching contract detail")
+            })
     }, []);
 
     console.log("conditions: ", conditions)
-
+    console.log("contract: ", contract)
 return (
     <Container component="main" maxWidth="lg">
         <StyledLayout>
-            <Title>Edit Contract (TODO)</Title>
+            <Title>Edit Contract {contract.title}</Title>
             <Grid container spacing={3}>
                 <Grid item xs={12} md={6} lg={6}>
                     <Typography variant='h4'>Details</Typography>
                     <hr />
-                    <Typography variant='h5'>Description</Typography>
-                    <Typography variant='body1'>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer ac tristique erat. Nulla ut rhoncus tortor. Praesent id turpis ac ex fringilla euismod. Proin sodales posuere massa, ac maximus erat faucibus id. Proin viverra est ac nulla luctus, id ultricies sem hendrerit. Duis euismod sodales purus, non vulputate tellus cursus vel. Etiam ac mi fermentum, dapibus ante eget, accumsan dui. Curabitur a enim id enim posuere auctor. Donec </Typography>
+                    <Typography variant='h6'>Title</Typography>
+                    <Typography variant='body2'>{contract.title}</Typography>
                     <hr />
-                    <Typography variant='h5'>Address</Typography>
-                    <Typography variant='body1'>xxxxxxxx-xxxxxxxx-xxxxxxxx-xxxxxxxx</Typography>
+                    <Typography variant='h6'>Owner ID</Typography>
+                    <Typography variant='body2'>{contract.owner}</Typography>
                     <hr />
-                    <Typography variant='h5'>Parties</Typography>
+                    <Typography variant='h6'>Contract ID</Typography>
+                    <Typography variant='body2'>{contract.contractID}</Typography>
+                    <hr />
+                    <Typography variant='h6'>State</Typography>
+                    <Typography variant='body2'>{contract.state}</Typography>
+                    <hr />
+                    <Typography variant='h6'>Creation Date</Typography>
+                    <Typography variant='body2'>{contract.creation_date}</Typography>
+                    <hr />
+                    <Typography variant='h6'>Description</Typography>
+                    <Typography variant='body2'>{contract.description}</Typography>
+                    <hr />
+                    <Typography variant='h6'>Address</Typography>
+                    <Typography variant='body2'>{contract.address === null ? "Not Available" : contract.address}</Typography>
+                    <hr />
+                    <Typography variant='h6'>Parties</Typography>
                     <ul>
                         <Typography varaint='body1'>
                             <li>Company 1</li>
@@ -93,9 +136,9 @@ return (
                         alignItems='flex-end'
                         height='100%'
                     >
-                        <Button variant='outlined' color='primary' size='large'>Invite Parties</Button>
-                        <Button variant='outlined' color='primary' size='large'>Deploy</Button>
-                        <Button variant='outlined' color='secondary' size='large'>Delete</Button>
+                        <Button variant='outlined' color='primary' size='large' disabled={btnValue === ''}>Invite Parties</Button>
+                        <Button variant='outlined' color='primary' size='large' disabled={btnValue === ''}>{btnValue}</Button>
+                        <Button variant='outlined' color='secondary' size='large' disabled={btnValue === ''} onClick={handleDelete}>Delete</Button>
                     </Box>
                 </Grid>
                 <Grid item xs={12} md={12} lg={12}>
