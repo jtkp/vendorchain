@@ -10,7 +10,7 @@ const Home = () => {
           Homepage
         </Title>
         {
-          localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).login === 'true'
+          localStorage.getItem('user')
             ? <Subtitle>You have logged in, go to dashboard to see your contracts. :D</Subtitle>
             : <Subtitle>Well come to Vendorchain, please login or register.</Subtitle>
         }

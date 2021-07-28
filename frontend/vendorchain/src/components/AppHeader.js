@@ -40,7 +40,7 @@ const AppHeader = ({ logout }) => {
           Vendorchain
         </Typography>
           {
-            localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).login === 'true'
+            localStorage.getItem('user')
               /* if not logged in, show login/register button */
               ? (
                   <div>

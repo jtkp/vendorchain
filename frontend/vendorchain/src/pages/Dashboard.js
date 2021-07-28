@@ -15,6 +15,7 @@ import {
 } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import DeleteIcon from '@material-ui/icons/Delete';
+import makeAPIRequest from '../Api';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -38,32 +39,38 @@ const Dashboard = () => {
   const [contracts, setContracts] = React.useState([]);
 
   React.useEffect(() => {
-    const auth = JSON.parse(localStorage.getItem('user'));
-    if (auth != null && auth.login === 'true') {
+    const loggedin = localStorage.getItem('user');
+    const user = JSON.parse(loggedin);
+
+    // if logged in
+    if (loggedin != null) {
       // TODO: fetch dashboard info and contracts here
-      const storage = JSON.parse(localStorage.getItem('contract'));
-      if (storage.contracts.length > 0) {
-        let tmpContractList = [];
-        storage.contracts.map(c => {
-          console.log(JSON.parse(c));
-          tmpContractList.push(JSON.parse(c));
-        });
-        setContracts(tmpContractList);
-      }
+      makeAPIRequest(`contracts/${user.userID}`, 'GET', null, null, null)
+        .then (res => {
+          console.log(res)
+          setContracts(res);
+        }).catch(err => {
+          alert('Fetch contracts failed, please try again later');
+          console.log(err);
+        })
 
     } else {
-      alert('Fail to fetch quizzes: Please login again.');
+      alert('Fail to fetch contracts: Please login again.');
       history.push('/home');
     }
   }, []);
-  console.log(localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).login === 'true')
+
+  const handleDelete = (event) => {
+    console.log(event)
+  }
+
   return (
     <Container>
       <Title>
         Dashboard
       </Title>
       {
-        localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).login === 'true'
+        localStorage.getItem('user') !== null
           ? (
               <Box>
                 <Subtitle>You currently have {contracts.length} contracts in total. <br/>Click them to edit the contract, or click the button below to create/import a new contract.</Subtitle>
@@ -73,38 +80,37 @@ const Dashboard = () => {
                   justifyContent='space-around'
                   p={3}
                 >
-                  <CreateContractModal setContracts={setContracts}/>
+                  <CreateContractModal contracts={contracts} setContracts={setContracts}/>
                   <ImportModal contracts={contracts} setContracts={setContracts}/>
                 </Box>
                   <List>
                     {
-                      contracts.length > 0 
-                      && (
                         contracts.map((c, idx) => {
                           console.log(c)
-                          return (
-                            <Button 
-                              color='primary' 
-                              variant='outlined'
-                              className={classes.root}
-                              style={{ margin: '10px' }}
-                              // component={ Link } 
-                              href={`/contract/edit/${c.name}`}  
-                              key={idx}
-                            >
-                                <ListItemText
-                                  primary={c.name}
-                                  secondary={c.status}
-                                />
-                                <ListItemSecondaryAction>
-                                  <IconButton edge="end" aria-label="delete">
-                                    <DeleteIcon />
-                                  </IconButton>
-                                </ListItemSecondaryAction>
-                            </Button>
-                          )
+                          if (c !== undefined) {
+                            return (
+                              <Button 
+                                color='primary' 
+                                variant='outlined'
+                                className={classes.root}
+                                style={{ margin: '10px' }}
+                                href={`/contract/edit/${c.contractID}`}  
+                                key={idx}
+                              >
+                                  <ListItemText
+                                    primary={c.title}
+                                    secondary={`ID: ${c.contractID}`}
+                                  />
+                                  <ListItemText
+                                    secondary={c.state}
+                                  />
+                              </Button>
+                            )
+                          } else {
+                            return <p key={idx}>Loading...</p>
+                          }
+                          
                         })
-                      )
                     }
                   </List>
               </Box>
