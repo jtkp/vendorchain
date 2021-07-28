@@ -115,31 +115,14 @@ const createUser = (request, response) => {
 /* ================================ Contracts ================================*/
 
 // get contract by a specific contract id - call functions - justin
-const getContractByIndex = (request, response) => {
-  // get parameters from url
-  const id = request.params.index;
-
-  pool.query('SELECT * FROM contract WHERE "contractID" = $1', [id], (error, results) => {
-    if (error) {
-      response.status(400).json(error);
-    } else {
-      response.status(200).json(results.rows)
-    }
-  })
-}
-
-// get contract by a specific address - call functions - justin
 const getContractByAddress = (request, response) => {
   // get parameters from url
-  const id = request.params.index;
+  const contractAddress = request.params.address;
 
-  pool.query('SELECT * FROM contract WHERE "contractID" = $1', [id], (error, results) => {
-    if (error) {
-      response.status(400).json(error);
-    } else {
-      response.status(200).json(results.rows)
-    }
-  })
+  const Vendor = await eth.Vendor(contractAddress);
+  const result = await Vendor.methods.getDetails().send();
+
+  response.status(200).json(result);
 }
 
 // get all contracts created by a specific user - katrina
@@ -158,9 +141,19 @@ const getContractsByUserAddress = (request, response) => {
 }
 
 // invite parties to a contract  - call functions - justin
-const inviteParty = (request, response) => {
-  const { contractId, partiesId } = request.body;
-  let query = 'INSERT INTO party ("partyID", "contractID") VALUES';
+const inviteParty = async (request, response) => {
+  const {contractId, partiesId} = request.body;
+
+  let query = 'SELECT address FROM userinfo WHERE id = $1';
+  // partyAddress = query here;
+
+  query = 'SELECT address FROM contract WHERE contractID = $1';
+  // contractAddress = query here;
+
+  const Vendor = await eth.Vendor(contractAddress);
+  const result = await Vendor.methods.setPayee(partyAddress).send();
+
+  query = 'INSERT INTO party ("partyID", "contractID") VALUES';
 
   partiesId.map((p) => {
     query += ` ('${p}','${contractId}'),`;
@@ -177,6 +170,15 @@ const inviteParty = (request, response) => {
   })
 }
 
+// approve a contract
+const approveContract = async (request, response) => {
+  const contractAddress = request.params.address;
+  const {payeeAddress, index} = request.body;
+
+  const VendorFactory = await eth.VendorFactory();
+  const result = await VendorFactory.methods.approveContract(contractAddress, index).send({'from': payeeAddress});
+}
+
 // create a contract  - call functions - daigo
 const createContract = async (request, response) => {
   const { title
@@ -185,6 +187,7 @@ const createContract = async (request, response) => {
         , expiryDate
         , startDate
         , amount 
+        , conditions
         } = request.body
   
   
@@ -200,14 +203,37 @@ const createContract = async (request, response) => {
     const hash = "";
 
     const VendorFactory = await eth.VendorFactory();
-    const res = await VendorFactory.methods.createContract(client, expiryDate, startDate, hash, amount, index);
+    const address = await VendorFactory.methods.createContract(client, expiryDate, startDate, hash, amount, index).send();
 
     pool.query("UPDATE contract SET address = $1 WHERE index = $2",
-    [res, index], 
+    [address, index], 
     (error, results) => {
     if (error) {
       response.status(400).json(error);
-    } 
+    }
+    // names // string[8]
+    // , values // int[8]
+    // , operators // string[8]
+
+    const names = [];
+    const values = [];
+    const operators = [];
+
+    for (var i = 0; i < 8; i++) {
+      names[i] = '';
+      values[i] = 0;
+      operators[i] = '';
+    }
+
+    for (var i = 0; i < conditions.length; i++) {
+      names[i] = conditions[i]['category'];
+      values[i] = conditions[i]['value'];
+      operators[i] = conditions[i]['operator'];
+    }
+
+    const Vendor = await eth.Vendor(address);
+    const res = await Vendor.methods.setConds(names, values, operators).send();
+
     response.status(200).json({ contractID: results.rows[0] });
     })
   })
@@ -215,9 +241,27 @@ const createContract = async (request, response) => {
 }
 
 // update contracts with contract id  - call functions - justin
-const updateContract = async (request, response) => {
+const updateContract = (request, response) => {
   const contractId = request.params.id;
   const { newTitle, newDescription, newAddress } = request.body;
+
+  // Use UPDATE keyword
+  pool.query('UPDATE contract SET title = $1, description = $2, address = $3 WHERE "contractID" = $4 returning * ', 
+              [newTitle, newDescription, newAddress, contractId],
+              (error, results) => {
+    if (error) {
+      response.status(400).json(error);
+    } else {
+      response.status(200).json(results.rows);
+    }
+  })
+
+}
+
+// store payment in the contract
+const storePayment = (request, response) => {
+  const contractAddress = request.params.address;
+  const {client} = request.body;
 
   // Use UPDATE keyword
   pool.query('UPDATE contract SET title = $1, description = $2, address = $3 WHERE "contractID" = $4 returning * ', 
@@ -241,11 +285,12 @@ module.exports = {
   getUserByEmail,
   createUser,
   // contracts
-  getContractByIndex,
   getContractByAddress,
   getContractsByUserAddress,
   getContractsByPayeeAdress,
   inviteParty,
   createContract,
   updateContract,
+  approveContract,
+  storePayment
 }
