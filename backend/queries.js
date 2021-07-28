@@ -215,7 +215,7 @@ const createContract = async (request, response) => {
 }
 
 // update contracts with contract id  - call functions - justin
-const updateContract = (request, response) => {
+const updateContract = async (request, response) => {
   const contractId = request.params.id;
   const { newTitle, newDescription, newAddress } = request.body;
 

@@ -9,7 +9,6 @@ contract Vendor {
     address payable public payee;
     bool public payeeApproved;
 
-    uint public creationDate;
     uint public startDate;
     uint public expiryDate;
     uint public amount;
@@ -52,10 +51,9 @@ contract Vendor {
     ////////////// INITIALISATION //////////////
     ////////////////////////////////////////////
 
-    function init(address _client, uint _createdOn, uint _expiredOn, uint _startDate, uint _contractHash, uint _amount) public {
+    function init(address _client, uint _expiredOn, uint _startDate, uint _contractHash, uint _amount) public {
         admin = msg.sender;
         client = payable(_client);
-        creationDate = _createdOn;
         expiryDate = _expiredOn;
         startDate = _startDate;
         prevBillingDate = calcDate(_startDate);
