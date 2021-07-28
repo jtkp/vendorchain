@@ -201,43 +201,44 @@ const createContract = async (request, response) => {
       console.log("Retrieved accounts");
 
       console.log("Before create contract")
-      console.log(client)
-      console.log(expiryDate)
-      console.log(startDate)
-      console.log(hash)
-      console.log(amount)
-      console.log(index);
-      const res = await VendorFactory.methods.createVendor(client, expiryDate, startDate, hash, amount, index)
+
+      let res = await VendorFactory.methods.createVendor(client, expiryDate, startDate, hash, amount, index)
       .send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
 
-      console.log("After create contract");
-      console.log("Executed contract");
-      console.log("Created new vendor contract");
-      response.status(200).json({ contractRes: res });
+  
+      const newVendorContractAddress = res.events.ClonedContract.returnValues._cloned;
+      console.log(newVendorContractAddress)
+      results = await pool.query("UPDATE contract SET address = $1 WHERE index = $2",[newVendorContractAddress, index])
       
-      // results = await pool.query("UPDATE contract SET address = $1 WHERE index = $2",[res, index])
-      // (error, results) => {
-      // if (error) {
-      //   response.status(400).json(error);
-      // } 
-      // response.status(200).json({ contractID: results.rows[0] });
-      // })
+      
+      
+      const names = [];
+      const values = [];
+      const operators = [];
+
+      for (var i = 0;  i < 8; i++) {
+        names[i] = '';
+        values[i] = 0;
+        operators[i] = '';
+      }
+
+      for (var i = 0; i < conditions.length; i++) {
+        names[i] = conditions[i]['category'];
+        values[i] = conditions[i]['value'];
+        operators[i] = conditions[i]['operator'];
+      }
+
+      const Vendor = await eth.Vendor(newVendorContractAddress);
+      res = await Vendor.methods.setConds(names, values, operators).send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
+      response.status(200).json({ status: "success" });
+
   } catch(err){
     console.log("error");
     console.log(err);
     response.status(400).json(err);
   }
   
-  // pool.query("INSERT INTO contract (title, description, owner) VALUES ($1, $2, $3) returning *",
-  //             [title, description, client], 
-  //             (error, res) => {
 
-  //   if (error) {
-  //     console.log("ERROR creating contract", err);
-  //     response.status(400).json(err);
-  //   } else {
-  //     const index = res.rows[0].index;
-  //     const hash = "";
   
   //     const VendorFactory = await eth.VendorFactory();
   //     const address = await VendorFactory.methods.createContract(client, expiryDate, startDate, hash, amount, index).send();
