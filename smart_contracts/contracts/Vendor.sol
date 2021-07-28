@@ -2,14 +2,20 @@
 
 pragma solidity ^0.8.4;
 
-// todo: handle contract destruction
-
-/// @title Contract that handles automated payment, considering if conditions are satisfied
+/// Contract that handles automated payment, considering if conditions are satisfied.
 contract Vendor {
     address public admin;
     address payable public client;
     address payable public payee;
     bool public payeeApproved;
+
+    uint public creationDate;
+    uint public startDate;
+    uint public expiryDate;
+    uint public amount;
+    uint public prevBillingDate;
+    uint public nextBillingDate;
+    uint public contractHash;
     
     enum Stages {
         Initialising,
@@ -20,35 +26,26 @@ contract Vendor {
     }
     Stages public stage = Stages.Initialising;
 
-    uint public creationDate;
-    uint public startDate;
-    uint public expiryDate;
-    uint public amount;
-    uint public prevBillingDate;
-    uint public nextBillingDate;
-    uint public contractHash;      // need to check variable definition, should be hash of contract terms
-
     bool public satisfied = false;
     
     // Allows custom conditions and length,
-    // but will require multiple small transactions to populate list of conditions
+    // but will require multiple small transactions to populate list of conditions.
     struct Conditions {
-        string name;
         int value;
         int operator;
+        string name;
     }
     Conditions[] public conditionArray;
     mapping (string => int) private operators;
     
-    // block calculation
+    // Block calculation.
     uint constant blocksDaily = 6400;                       // Average blocks mined per day
     uint blocksSecond = blocksDaily/24/60/60;               // Average blocks per second
 
-    // values that conditions will check to see if it is satisfied
+    // Values that conditions will check to see if it is satisfied.
     mapping (uint => int) private cumulative;       // sums all values received during the contract, same length as conditionArray
     int private count;                              // keeps track of how many times values were received
 
-    // contract is satisfied/unsatisfied at end of valid period
     event State(address indexed sender, bool isSatisfied, string message);
 
     ////////////////////////////////////////////
@@ -77,20 +74,19 @@ contract Vendor {
         operators['<='] = 6;
     }
 
-    // calculate the block number equivalent to a timestamp
+    // Calculate the block number equivalent to a timestamp.
     function calcDate(uint _billingDate) private view returns (uint) {
         uint blockInterval = (_billingDate - block.timestamp)/blocksSecond; // timestamp difference in seconds/blocks per second = blocks from now
         return block.number + blockInterval;
     }
 
-    // todo: set so only VendorFactory can call this
     function setConds(string[8] memory _names, int[8] memory _values, string[8] memory _operators) external atStage(Stages.Initialising) {
         for (uint i = 0; i < 8; i++) {
-            if (keccak256(bytes(_names[i])) == keccak256(bytes("None"))) {
+            if (keccak256(bytes(_names[i])) == keccak256(bytes(""))) {
                 endInitStage();
                 return;     // break out of loop when received condition name equals "None"
             }
-            conditionArray.push(Conditions(_names[i], _values[i], operators[_operators[i]]));
+            conditionArray.push(Conditions(_values[i], operators[_operators[i]], _names[i]));
         }
     }
 
@@ -132,7 +128,6 @@ contract Vendor {
         return address(this).balance;
     }
     
-    // todo: what happens when there is no stored balance in the contract???
     function payVendor() private {
         payee.transfer(amount);
         setNewDates();
@@ -179,8 +174,8 @@ contract Vendor {
         payVendor();
     }
     
-    // operator is checked against binary 111,
-    // left bit means less than, middle bit means equal to, right bit means greater than
+    // Operator is checked against binary 111,
+    // left bit means less than, middle bit means equal to, right bit means greater than.
     function condValid(int operator, int _toCheck, int value) private pure returns (bool) {
         if (operator != -1) {
             if (operator & 1 == 1) {
