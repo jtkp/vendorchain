@@ -62,18 +62,18 @@ const getUserByEmail = (request, response) => {
 }
 
 // get a specif user by userId
-const getUserByAddress = (request, response) => {
-  // get parameters from url
-  const address = request.params.address;
+// const getUserByAddress = (request, response) => {
+//   // get parameters from url
+//   const address = request.params.address;
 
-  pool.query("SELECT * FROM userinfo WHERE 'address' = $1", [address], (error, results) => {
-    if (error) {
-      response.status(400).json(error);
-    } else {
-      response.status(200).json(results.rows);
-    }
-  })
-}
+//   pool.query("SELECT * FROM userinfo WHERE 'address' = $1", [address], (error, results) => {
+//     if (error) {
+//       response.status(400).json(error);
+//     } else {
+//       response.status(200).json(results.rows);
+//     }
+//   })
+// }
 
 // add a user 
 const createUser = (request, response) => {
@@ -178,20 +178,43 @@ const inviteParty = (request, response) => {
 }
 
 // create a contract  - call functions
-const createContract = (request, response) => {
-  const { title, description, userAddress  } = request.body
-
-  pool.query("INSERT INTO contract (title, description, state, owner) VALUES ($1, $2, 'Not Saved', $3) returning *",
-              [title, description, userAddress], 
+const createContract = async (request, response) => {
+  const { title
+        , description 
+        , client
+        , expiryDate
+        , startDate
+        , amount 
+        } = request.body
+  
+  
+  pool.query("INSERT INTO contract (title, description, owner) VALUES ($1, $2, $3) returning *",
+              [title, description, client], 
               (error, results) => {
 
     if (error) {
       response.status(400).json(error);
-    } else {
-      response.status(200).json({ contractID: results.rows[0].contractID })
+    } 
+    const index = results.rows[0].index;
+    const hash = "";
 
-    }
+    eth.accounts()
+    .then((accounts)=>{
+      const account = accounts[0];
+      const VendorFactory = await             eth.VendorFactory();
+      const          
+
+    })
+    
+    
+
+
+
+    response.status(200).json({ contractID: results.rows[0] })
+
   })
+
+
 }
 
 // update contracts with contract id  - call functions
