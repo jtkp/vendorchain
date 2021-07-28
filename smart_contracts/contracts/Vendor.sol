@@ -116,6 +116,10 @@ contract Vendor {
     ////////// DEPLOYED FUNCTIONALITY //////////
     ////////////////////////////////////////////
 
+    function getDetails() external view returns (address, address, uint, uint, uint, uint, uint, uint) {
+        return (client, payee, startDate, expiryDate, amount, prevBillingDate, nextBillingDate, contractHash);
+    }
+
     function storePayment() external payable atStage(Stages.Active) checkBillingDate() {
         if (msg.value != amount) {
             revert();
