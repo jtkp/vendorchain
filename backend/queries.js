@@ -8,10 +8,15 @@ const pool = new Pool({
   port: 5432,
 })
 
+const eth = require("./smart_contracts/eth");
+
+// track the number of registered users
+let num_user = 0;
+
 /* ================================ Users ================================*/
 
-// get all users - Katrina - checked
-const getUsers = (request, response) => {
+// get all users - Katrina
+const getAdmin = (request, response) => {
   pool.query('SELECT * FROM userinfo ORDER BY "userID" ASC', (error, results) => {
     if (error) {
       response.status(400).json(error);
@@ -21,7 +26,30 @@ const getUsers = (request, response) => {
   })
 }
 
-// get user by email - Katrina - checked
+// get all Vendors - Katrina
+const getVendors = (request, response) => {
+  pool.query('SELECT * FROM userinfo ORDER BY "userID" ASC', (error, results) => {
+    if (error) {
+      response.status(400).json(error);
+    } else {
+      response.status(200).json(results.rows);
+    }
+  })
+}
+
+// get user by address - Katrina
+const getUserByAddress = (request, response) => {
+  const email = request.params.email;
+  pool.query('SELECT * FROM userinfo WHERE email = $1', [email], (error, results) => {
+    if (error) {
+      response.status(400).json(error);
+    } else {
+      response.status(200).json(results.rows);
+    }
+  })
+}
+
+// get user by email - call functions
 const getUserByEmail = (request, response) => {
   const email = request.params.email;
   pool.query('SELECT * FROM userinfo WHERE email = $1', [email], (error, results) => {
@@ -33,12 +61,12 @@ const getUserByEmail = (request, response) => {
   })
 }
 
-// get a specif user by userId- Katrina - checked
-const getUserById = (request, response) => {
+// get a specif user by userId
+const getUserByAddress = (request, response) => {
   // get parameters from url
-  const id = request.params.id;
+  const address = request.params.address;
 
-  pool.query('SELECT * FROM userinfo WHERE "userID" = $1', [id], (error, results) => {
+  pool.query("SELECT * FROM userinfo WHERE 'address' = $1", [address], (error, results) => {
     if (error) {
       response.status(400).json(error);
     } else {
@@ -47,43 +75,49 @@ const getUserById = (request, response) => {
   })
 }
 
-// add a user - Katrina - checked
+// add a user 
 const createUser = (request, response) => {
   const { name, email, password } = request.body
+  const isAdmin = num_user === 0 ? true : false;
 
-  pool.query(`INSERT INTO userinfo (name, email, password) VALUES ('${name}', '${email}', '${password}') returning *`,
-              (error, results) => {
-    if (error) {
-      if (error.constraint === 'userinfo_email_key') {
-        response.status(400).json({ "error": "Email existed, please use another email." });
-      } else {
-        response.status(400).json(error);
-      }
-    
-    // if success, get and return user's id
-    } else {
-      response.status(200).json({ userID: results.rows[0].userID});
-    }
-  })
+  if (num_user > 10) {
+    response.status(401).send("ERROR: Number of users exceed maximum");
+
+  } else {
+    eth.accounts()
+      .then(res => {
+        pool.query(`INSERT INTO userinfo (name, email, password, address, isAdmin) VALUES ('${name}', '${email}', '${password}', '${res[num_user]}', ${isAdmin}) returning *`,
+                (error, results) => {
+          if (error) {
+            if (error.constraint === 'userinfo_email_key') {
+              response.status(400).json({ "error": "Email existed, please use another email." });
+  
+            } else {
+              response.status(400).json(error);
+            }
+          
+          // if success, get and return user 
+          } else {
+            num_user += 1;
+            response.status(200).json(results.rows[0]);
+            console.log(`Create ${isAdmin ? 'admin' : 'user'} with address ${results.rows[0].address}`);
+          }
+        })
+  
+      })
+      .catch(err => {
+        console.log("ERROR getting eth accounts.");
+        response.status(404).send("ERROR getting eth accoutns");
+      })
+  }
 }
 
 /* ================================ Contracts ================================*/
 
-// get all contracts - Katrina - checked
-const getContracts = (request, response) => {
-  pool.query('SELECT * FROM contract ORDER BY "contractID" ASC', (error, results) => {
-    if (error) {
-      response.status(400).json(error);
-    } else {
-      response.status(200).json(results.rows);
-    }
-  })
-}
-
-// get contract by a specific contract id - Katrina - checked
-const getContractById = (request, response) => {
+// get contract by a specific contract id - call functions
+const getContractByIndex = (request, response) => {
   // get parameters from url
-  const id = request.params.id;
+  const id = request.params.index;
 
   pool.query('SELECT * FROM contract WHERE "contractID" = $1', [id], (error, results) => {
     if (error) {
@@ -94,12 +128,26 @@ const getContractById = (request, response) => {
   })
 }
 
-// get all contracts created by a specific user - Katrina - checked
-const getContractsByUserId = (request, response) => {
+// get contract by a specific address - call functions
+const getContractByAddress = (request, response) => {
   // get parameters from url
-  const id = request.params.userId;
+  const id = request.params.index;
 
-  pool.query('SELECT * FROM contract WHERE "owner" = $1', [id], (error, results) => {
+  pool.query('SELECT * FROM contract WHERE "contractID" = $1', [id], (error, results) => {
+    if (error) {
+      response.status(400).json(error);
+    } else {
+      response.status(200).json(results.rows)
+    }
+  })
+}
+
+// get all contracts created by a specific user 
+const getContractsByUserAddress = (request, response) => {
+  // get parameters from url
+  const address = request.params.userAddress;
+
+  pool.query('SELECT * FROM contract WHERE "owner" = $1', [address], (error, results) => {
 
     if (error) {
       response.status(400).json(error);
@@ -109,39 +157,8 @@ const getContractsByUserId = (request, response) => {
   })
 }
 
-//  get the parties from contract with a specific id - Katrina - to update parites' status
-const getParties  = (request, response) => {
-  const contractId = request.params.id;
-
-  pool.query('SELECT u.name as parties, u.email as partyEmail, uu.name as invitor FROM party p INNER JOIN contract c on c."contractID" = p."contractID" INNER JOIN userinfo u on "partyID" = "userID" INNER JOIN userinfo uu on "owner" = uu."userID" WHERE c."contractID" = $1',
-              [contractId],
-              (error, results) => {
-    
-    if (error) {
-      response.status(400).json(error);
-    } else {
-      response.status(200).json(results.rows);
-    }
-  });
-}
-
-// delete contract by id - Katrina
-const deleteContractById = (request, response) => {
-  const id = request.params.id;
-
-  pool.query(`DELETE FROM contract where "contractID" = '${id}'`,
-            (error, results) => {
-
-    if (error) {
-      response.status(400).json(error);
-    } else {
-      response.status(200).json(`Contract ${id} has been deleted`);
-    }
-  })
-}
-
-// invite parties to a contract - Katrina - checked
-const inviteParties = (request, response) => {
+// invite parties to a contract  - call functions
+const inviteParty = (request, response) => {
   const { contractId, partiesId } = request.body;
   let query = 'INSERT INTO party ("partyID", "contractID") VALUES';
 
@@ -160,12 +177,12 @@ const inviteParties = (request, response) => {
   })
 }
 
-// create a contract - Katrina - checked
+// create a contract  - call functions
 const createContract = (request, response) => {
-  const { title, description, userId  } = request.body
+  const { title, description, userAddress  } = request.body
 
   pool.query("INSERT INTO contract (title, description, state, owner) VALUES ($1, $2, 'Not Saved', $3) returning *",
-              [title, description, userId], 
+              [title, description, userAddress], 
               (error, results) => {
 
     if (error) {
@@ -177,7 +194,7 @@ const createContract = (request, response) => {
   })
 }
 
-// update  contracts with contract id - Sang - checked
+// update contracts with contract id  - call functions
 const updateContract = (request, response) => {
   const contractId = request.params.id;
   const { newTitle, newDescription, newAddress } = request.body;
@@ -196,125 +213,19 @@ const updateContract = (request, response) => {
 }
 
 
-//  update state of a contract - Sang - checked
-const updateContractState = (request, response) => {
-  const contractId = request.params.id;
-  const { newState } = request.body;
-
-  // Use UPDATE keyword
-  pool.query('UPDATE contract SET state = $1 WHERE "contractID" = $2 returning *', 
-              [newState, contractId],
-              (error, results) => {
-    if (error) {
-      response.status(400).json(error);
-    } else {
-      response.status(200).json(results.rows);
-    }
-  })
-}
-
-/* ================================ Conditions ================================*/
-
-//  get all conditions with a contract id - Sang
-const getConditions = (request, response) => {
-  const contractId = request.params.contractId;
-
-  pool.query('SELECT * FROM condition WHERE "contractID" = $1 ORDER BY "contractID" ASC', 
-              [contractId],
-              (error, results) => {
-    if (error) {
-      response.status(400).json(error);
-    } else {
-      response.status(200).json(results.rows);
-    }
-  })
-}
-
-// TODO: get a specific condition by an condition id - Sang
-const getConditionById = (request, response) => {
-  const conditionId = request.params.id;
-
-  pool.query('SELECT * FROM condition WHERE "conditionID" = $1 ORDER BY "conditionID" ASC', 
-              [conditionId],
-              (error, results) => {
-    if (error) {
-      response.status(400).json(error);
-    } else {
-      response.status(200).json(results.rows);
-    }
-  })
-
-}
-
-// TODO: add a condition into database - Sang
-const addCondition = (request, response) => {
-  const { newDescription, newCategory, newOperator, newValue, contractId } = request.body;
-
-  pool.query('INSERT INTO condition (description, category, operator, value, "contractID") VALUES ($1, $2, $3, $4, $5) returning *',
-              [newDescription, newCategory, newOperator, newValue, contractId],
-              (error, results) => {
-    if (error) {
-      response.status(400).json(error);
-    } else {
-      response.status(200).json(results.rows);
-    }
-  })
-
-}
-
-// TODO: udpate a specific condition - Sang
-const updateConditionById = (request, response) => {
-  const conditionId = request.params.id;
-  const { newDescription, newCategory, newOperator, newValue } = request.body;
-
-  pool.query('UPDATE contract SET description = $1, category = $2, operator = $3, value = $4 WHERE "conditionID" = $5 returning *', 
-            [newDescription, newCategory, newOperator, newValue, conditionId],
-            (error, results) => {
-    if (error) {
-      response.status(400).json(error);
-    } else {
-      response.status(200).json(results.rows);
-    }
-  })
-
-}
-
-// delete a condition 
-const deleteConditionById = (request, response) => {
-  const id = parseInt(request.params.id);
-
-  pool.query(`DELETE FROM condition where "conditionID = ${id}`,
-            (error, results) => {
-
-    if (error) {
-      response.status(400).json(error);
-    } else {
-      response.status(200).json({ Success: `Condition ${id} has been deleted` });
-    }
-  })
-}
-
-
 module.exports = {
   // users
-  getUsers,
-  getUserById,
+  getAdmin,
+  getVendors,
+  getUserByAddress,
   getUserByEmail,
   createUser,
   // contracts
-  getContracts,
-  getContractById,
-  getContractsByUserId,
-  getParties,
-  deleteContractById,
-  inviteParties,
+  getContractByIndex,
+  getContractByAddress,
+  getContractsByUserAddress,
+  getContractsByPayeeAdress,
+  inviteParty,
   createContract,
   updateContract,
-  updateContractState,
-  // conditions
-  getConditions,
-  getConditionById,
-  addCondition,
-  updateConditionById,
-  deleteConditionById,
 }
