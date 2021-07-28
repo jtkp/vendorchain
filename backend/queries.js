@@ -15,20 +15,20 @@ let num_user = 0;
 
 /* ================================ Users ================================*/
 
-// get all users - Katrina
+// get admin - Katrina
 const getAdmin = (request, response) => {
-  pool.query('SELECT * FROM userinfo ORDER BY "userID" ASC', (error, results) => {
+  pool.query('SELECT * FROM userinfo WHERE "isAdmin" = true', (error, results) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).json(results.rows);
+      response.status(200).json(results.rows[0]);
     }
   })
 }
 
 // get all Vendors - Katrina
 const getVendors = (request, response) => {
-  pool.query('SELECT * FROM userinfo ORDER BY "userID" ASC', (error, results) => {
+  pool.query('SELECT * FROM userinfo WHERE "isAdmin" = false', (error, results) => {
     if (error) {
       response.status(400).json(error);
     } else {
@@ -39,8 +39,8 @@ const getVendors = (request, response) => {
 
 // get user by address - Katrina
 const getUserByAddress = (request, response) => {
-  const email = request.params.email;
-  pool.query('SELECT * FROM userinfo WHERE email = $1', [email], (error, results) => {
+  const address = request.params.address;
+  pool.query('SELECT * FROM userinfo WHERE address = $1', [address], (error, results) => {
     if (error) {
       response.status(400).json(error);
     } else {
@@ -61,20 +61,6 @@ const getUserByEmail = (request, response) => {
   })
 }
 
-// get a specif user by userId
-// const getUserByAddress = (request, response) => {
-//   // get parameters from url
-//   const address = request.params.address;
-
-//   pool.query("SELECT * FROM userinfo WHERE 'address' = $1", [address], (error, results) => {
-//     if (error) {
-//       response.status(400).json(error);
-//     } else {
-//       response.status(200).json(results.rows);
-//     }
-//   })
-// }
-
 // add a user 
 const createUser = (request, response) => {
   const { name, email, password } = request.body
@@ -86,7 +72,7 @@ const createUser = (request, response) => {
   } else {
     eth.accounts()
       .then(res => {
-        pool.query(`INSERT INTO userinfo (name, email, password, address, isAdmin) VALUES ('${name}', '${email}', '${password}', '${res[num_user]}', ${isAdmin}) returning *`,
+        pool.query(`INSERT INTO userinfo (name, email, password, address, "isAdmin") VALUES ('${name}', '${email}', '${password}', '${res[num_user]}', ${isAdmin}) returning *`,
                 (error, results) => {
           if (error) {
             if (error.constraint === 'userinfo_email_key') {
@@ -147,14 +133,27 @@ const getContractsByUserAddress = (request, response) => {
   // get parameters from url
   const address = request.params.userAddress;
 
-  pool.query('SELECT * FROM contract WHERE "owner" = $1', [address], (error, results) => {
-
+  pool.query('SELECT * FROM contract WHERE owner = $1', [address], (error, results) => {
     if (error) {
       response.status(400).json(error);
     } else {
       response.status(200).json(results.rows)
     }
   })
+}
+
+// get contracts that - katrina
+const getContractsByPayeeAddress = (request, response) => {
+  const payee = request.params.address;
+  pool.query('SELECT c.address, c.title, c.description, c.owner FROM party p JOIN contract c on c.address = p.address WHERE p.address = $1', [payee], (error, results) => {
+    if (error) {
+      response.status(400).json(error);
+    } else {
+      response.status(200).json(results.rows)
+    }
+  })
+
+
 }
 
 // invite parties to a contract  - call functions - justin
@@ -199,17 +198,24 @@ const createContract = async (request, response) => {
     const index = results.rows[0].index;
     const hash = "";
 
-    const VendorFactory = await eth.VendorFactory();
-    const res = await VendorFactory.methods.createContract(client, expiryDate, startDate, hash, amount, index);
+    eth.VendorFactory()
+    .methods
+    .createContract(client, expiryDate, startDate, hash, amount, index)
+    .then(res => {
+      pool.query("UPDATE contract SET address = $1 WHERE index = $2",
+      [res, index], 
+      (error, results) => {
+        if (error) {
+          response.status(400).json(error);
+        } 
+        response.status(200).json({ contractID: results.rows[0] });
+      })
 
-    pool.query("UPDATE contract SET address = $1 WHERE index = $2",
-    [res, index], 
-    (error, results) => {
-    if (error) {
-      response.status(400).json(error);
-    } 
-    response.status(200).json({ contractID: results.rows[0] });
     })
+    .catch(err => {
+      console.log("ERROR creating contract", err);
+    })
+
   })
 
 }
@@ -244,7 +250,7 @@ module.exports = {
   getContractByIndex,
   getContractByAddress,
   getContractsByUserAddress,
-  getContractsByPayeeAdress,
+  getContractsByPayeeAddress,
   inviteParty,
   createContract,
   updateContract,
