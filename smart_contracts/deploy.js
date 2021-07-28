@@ -1,5 +1,7 @@
 // How to deploy the contracts?
 const VendorFactoryContract = require("./build/VendorFactory.json");
+const VendorContract = require("./build/Vendor.json");
+
 const Web3 = require("web3");
 const path = require('path');
 const fs   = require('fs-extra');
@@ -12,32 +14,82 @@ let deployedAddress;
 const deploy = async () => {
     const accounts = await web3.eth.getAccounts();
     const account = accounts[0];
+    let contract;
+    let gasPrice;
+    let estimatedGas;
+    let res;
 
-    console.log('Attempting to deploy from account', accounts[0]);
+    // Find the average price for gas
+    await web3.eth.getGasPrice().then((averageGasPrice) => {
+            gasPrice = averageGasPrice;
+        }).catch(console.error);
+    
+    // =========== Deploy Empty Vendor  ===========
 
-    let contract = new web3.eth.Contract(
+    contract = new web3.eth.Contract(
+        VendorContract.abi, // The json interface?
+        undefined, {                                    // (Optional) Address of smart contract to call
+        data: '0x' + VendorContract.evm.bytecode.object // The byte code of contract
+    });
+
+    const _client = 0;
+    const _payee = 0;
+    const _creationDate = 0;
+    const _expiryDate = 0;
+    const _prevBillingDate = 0;
+    const _nextBillingDate = 0;
+    const _contractHash = 0;
+    const _amount = 0;
+    const index = 0;
+
+    // Find estimate gas to deploy Vendor Contract
+    estimatedGas = await contract
+                  .deploy({ data: contract.options.data, arguments:[] })
+                  .estimateGas({from: account});
+    
+    res = await contract
+         .deploy({ data: contract.options.data
+                 , arguments: 
+                   [ _client
+                   , _payee
+                   , _creationDate
+                   , _expiryDate
+                   , _prevBillingDate
+                   , _nextBillingDate
+                   , _contractHash
+                   , _amount
+                   , index
+                   ]  
+                 }
+                )  
+          .send({ from: account, gasPrice: gasPrice, gas: Math.ceil(1.2 * estimatedGas)});    
+    
+    console.log("Empty vendor contract deployed");
+
+    const emptyVendorContractAddress = res._address;
+    
+    // =========== Deploy Vendor Factory ===========
+
+    contract = new web3.eth.Contract(
         VendorFactoryContract.abi, // The json interface?
         undefined, {                                    // (Optional) Address of smart contract to call
         data: '0x' + VendorFactoryContract.evm.bytecode.object // The byte code of contract
     });
-    
-    let gasPrice;
-    await web3.eth.getGasPrice().then((averageGasPrice) => {
-        gasPrice = averageGasPrice;
-    }).catch(console.error);
+    // Find estimate gas to deploy Vendor Contract
+    estimatedGas = await contract
+                  .deploy({ data: contract.options.data, arguments: [emptyVendorContractAddress]})
+                  .estimateGas({from: account});
 
-    let gas = await contract
-    .deploy({ data: contract.options.data, arguments: []})
-    .estimateGas({from: account});
+    res = await contract
+          .deploy({ data: contract.options.data, arguments: [emptyVendorContractAddress]})
+          .send({ from: account, gasPrice: gasPrice, gas: Math.ceil(1.2 * estimatedGas)}); 
     
-    console.log(`estimated gas:${gas}`);
+    const vendorFactoryAddress = res._address
+    console.log("Vendor factory deployed");
 
-    // Q. Why do we need to pass arguments?
-    let res = await contract
-    .deploy({ data: contract.options.data, arguments: []})
-    .send({ from: account, gasPrice: gasPrice, gas: Math.ceil(1.2 * gas)});    
-    fs.outputJsonSync(path.resolve(__dirname, 'addresses.json'), {"VendorFactory": res._address}); 
-    return res._address;
+    fs.outputJsonSync(path.resolve(__dirname, 'addresses.json'), {"VendorFactory": vendorFactoryAddress}); 
+
+    return vendorFactoryAddress;
 };
 
 deploy();

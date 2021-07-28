@@ -23,8 +23,17 @@ contract VendorFactory is CloneFactory {
         admin = msg.sender;
     }
 
-    function createVendor(address _client, address _payee, uint _creationDate, uint _expiryDate, uint _prevBillingDate, uint _nextBillingDate,
-                          uint _contractHash, uint _amount, int index) external onlyAdmin() returns (address) {
+    function createVendor
+        ( address _client
+        , address _payee
+        , uint _creationDate
+        , uint _expiryDate
+        , uint _prevBillingDate
+        , uint _nextBillingDate
+        , uint _contractHash
+        , uint _amount
+        , int index 
+        ) external onlyAdmin() returns (address) {
 
         address newVendor = createClone(implementation);
         Vendor(newVendor).init(_client, _payee, _creationDate, _expiryDate, _prevBillingDate, _nextBillingDate, _contractHash, _amount);

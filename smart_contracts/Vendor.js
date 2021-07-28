@@ -4,6 +4,6 @@ const web3 = new Web3(provider);
 const VendorContractJson = require("./build/Vendor.json");
 
 export default (address) => new web3.eth.Contract(
-    VendorContratJson.abi,
+    VendorContractJson.abi,
     address
 );

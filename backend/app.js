@@ -1,4 +1,5 @@
 const { response } = require('express');
+const eth = require("./smart_contracts/eth");
 const VendorFactory = require("./smart_contracts/VendorFactory");
 const Web3 = require("web3");
 
@@ -51,13 +52,16 @@ app.post('/oracle', oracle.verify);
 
 app.listen(port,'0.0.0.0',async () => {
   console.log(`Vendorchain db listening at http://localhost:${port}`);
-  
-  const accounts = await web3.eth.getAccounts();
-  const account = accounts[0];
+    
+  const accounts = await eth.accounts();
+  console.log(accounts)
 
+  // const accounts = await web3.eth.getAccounts();
+  // const account = accounts[0];
+  const VendorFactory = await eth.VendorFactory();
   const methods =  VendorFactory.methods// .state().call({from: userAddress});
-  const manager = await methods.manager().call({"from": account})
-  console.log(manager);
+  // const manager = await methods.manager().call({"from": account})
+  console.log(methods);
 
   // for(const key in VendorFactory){)
   //   console.log(key)
