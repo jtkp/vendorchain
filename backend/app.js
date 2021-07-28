@@ -1,5 +1,5 @@
 const { response } = require('express');
-const eth = require("./smart_contracts/eth");
+
 const VendorFactory = require("./smart_contracts/VendorFactory");
 const Web3 = require("web3");
 
@@ -10,7 +10,6 @@ const web3 = new Web3(provider);
 const express = require('express');
 const app = express();
 const port = 3000;
-
 app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 
@@ -23,45 +22,36 @@ app.get('/', (req, res) => {
 })
 
 /* ================================ Users ================================*/
-app.get('/users', db.getUsers);
-app.get('/user/:id', db.getUserById);
+app.get('/admin', db.getAdmin);
+app.get('/vendors', db.getVendors);
+app.get('/user/:address', db.getUserByAddress);
 app.get('/user/email/:email', db.getUserByEmail);
 app.post('/user', db.createUser);
 
 /* ================================ Contracts ================================*/
-app.get('/contracts', db.getContracts);
-app.get('/contract/:id', db.getContractById);
-app.get('/contracts/:userId', db.getContractsByUserId);
-app.get('/contract/parties/:id', db.getParties);
-app.delete('/contract/:id', db.deleteContractById);
-app.post('/contract/party', db.inviteParties);
+app.get('/contract/:index', db.getContractByIndex);
+app.get('/contract/:address', db.getContractByAddress);
+app.get('/contracts/:userAddress', db.getContractsByUserAddress);
+app.get('/contracts/payee/:userAddress', db.getContractsByPayeeAdress);
+app.post('/contract/payee', db.inviteParty);
 app.post('/contract', db.createContract);
-app.put('/contract/:id', db.updateContract);
-app.put('/contract/state/:id', db.updateContractState);
+app.put('/contract/:index', db.updateContract);
 
-/* ================================ Conditions ================================*/
-app.get('/conditions/:contractId', db.getConditions);
-app.get('/condition/:id', db.getConditionById); 
-app.post('/condition', db.addCondition);
-app.put('/condition/:id', db.updateConditionById);
-app.delete('/condition/:id', db.deleteConditionById);
 
 
 /* ================================ Oracle ================================*/
 app.post('/oracle', oracle.verify);
 
-app.listen(port,'0.0.0.0',async () => {
+app.listen(port,'0.0.0.0', async () => {
   console.log(`Vendorchain db listening at http://localhost:${port}`);
-    
-  const accounts = await eth.accounts();
-  console.log(accounts)
+  
 
-  // const accounts = await web3.eth.getAccounts();
-  // const account = accounts[0];
-  const VendorFactory = await eth.VendorFactory();
-  const methods =  VendorFactory.methods// .state().call({from: userAddress});
-  // const manager = await methods.manager().call({"from": account})
-  console.log(methods);
+  // // const accounts = await web3.eth.getAccounts();
+  // // const account = accounts[0];
+  // const VendorFactory = await eth.VendorFactory();
+  // const methods =  VendorFactory.methods// .state().call({from: userAddress});
+  // // const manager = await methods.manager().call({"from": account})
+  // console.log(methods);
 
   // for(const key in VendorFactory){)
   //   console.log(key)
