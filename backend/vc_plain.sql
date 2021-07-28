@@ -5,7 +5,7 @@
 -- Dumped from database version 12.0
 -- Dumped by pg_dump version 12.0
 
--- Started on 2021-07-28 12:19:58 AEST
+-- Started on 2021-07-28 19:24:34 AEST
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -18,177 +18,126 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
---
--- TOC entry 2 (class 3079 OID 16570)
--- Name: uuid-ossp; Type: EXTENSION; Schema: -; Owner: -
---
-
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
-
-
---
--- TOC entry 3185 (class 0 OID 0)
--- Dependencies: 2
--- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
---
-
-COMMENT ON EXTENSION "uuid-ossp" IS 'generate universally unique identifiers (UUIDs)';
-
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- TOC entry 205 (class 1259 OID 16481)
--- Name: condition; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.condition (
-    "conditionID" uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    description character varying(100),
-    category character varying(20),
-    operator character varying(10),
-    value numeric,
-    "contractID" uuid
-);
-
-
-ALTER TABLE public.condition OWNER TO postgres;
-
---
--- TOC entry 204 (class 1259 OID 16459)
+-- TOC entry 204 (class 1259 OID 16674)
 -- Name: contract; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.contract (
-    "contractID" uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    title character varying(20),
-    description character varying(100),
-    creation_date date DEFAULT CURRENT_DATE NOT NULL,
-    state character varying(20),
-    address character varying(100),
-    owner uuid,
-    index integer DEFAULT '-1'::integer
+    index integer NOT NULL,
+    description character varying(200),
+    "cntrctAddress" character varying(200),
+    "ownerAddress" character varying(200),
+    title character varying(40)
 );
 
 
 ALTER TABLE public.contract OWNER TO postgres;
 
 --
--- TOC entry 206 (class 1259 OID 16559)
--- Name: party; Type: TABLE; Schema: public; Owner: postgres
+-- TOC entry 203 (class 1259 OID 16672)
+-- Name: contract_index_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.party (
-    "partyID" uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    "contractID" uuid NOT NULL,
-    confirm boolean DEFAULT false NOT NULL
-);
+CREATE SEQUENCE public.contract_index_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
 
-ALTER TABLE public.party OWNER TO postgres;
+ALTER TABLE public.contract_index_seq OWNER TO postgres;
 
 --
--- TOC entry 203 (class 1259 OID 16454)
+-- TOC entry 3155 (class 0 OID 0)
+-- Dependencies: 203
+-- Name: contract_index_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.contract_index_seq OWNED BY public.contract.index;
+
+
+--
+-- TOC entry 202 (class 1259 OID 16665)
 -- Name: userinfo; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.userinfo (
-    "userID" uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    name character varying(20),
+    address character varying(200) NOT NULL,
+    name character varying(40),
     email character varying(40),
-    password character varying(20)
+    password character varying(40),
+    "isAdmin" boolean
 );
 
 
 ALTER TABLE public.userinfo OWNER TO postgres;
 
 --
--- TOC entry 3178 (class 0 OID 16481)
--- Dependencies: 205
--- Data for Name: condition; Type: TABLE DATA; Schema: public; Owner: postgres
+-- TOC entry 3011 (class 2604 OID 16677)
+-- Name: contract index; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
-COPY public.condition ("conditionID", description, category, operator, value, "contractID") FROM stdin;
-a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14	The internet speed should be bigger than 10 Mps.	Speed	>	100	a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12
-\.
+ALTER TABLE ONLY public.contract ALTER COLUMN index SET DEFAULT nextval('public.contract_index_seq'::regclass);
 
 
 --
--- TOC entry 3177 (class 0 OID 16459)
+-- TOC entry 3149 (class 0 OID 16674)
 -- Dependencies: 204
 -- Data for Name: contract; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.contract ("contractID", title, description, creation_date, state, address, owner, index) FROM stdin;
-a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12	vc	vendor chain contract	2021-07-25	Pending	0x14b81Db3C568d32274FBb3e64F9C85F86fBE5393	a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11	-1
-9dfad162-2d57-4777-aba6-0a902ec155f8	dang	detail detail	2021-07-26	Pending	0x14b81Db3C568d32274FBb3e64F9C85F86fBE5394	a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11	-1
+COPY public.contract (index, description, "cntrctAddress", "ownerAddress", title) FROM stdin;
+1	qweert	zxczxc	asdasd	aaa
 \.
 
 
 --
--- TOC entry 3179 (class 0 OID 16559)
--- Dependencies: 206
--- Data for Name: party; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.party ("partyID", "contractID", confirm) FROM stdin;
-a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13	a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12	f
-49f59501-bb77-4c34-8488-5342beb7bd9b	a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12	t
-\.
-
-
---
--- TOC entry 3176 (class 0 OID 16454)
--- Dependencies: 203
+-- TOC entry 3147 (class 0 OID 16665)
+-- Dependencies: 202
 -- Data for Name: userinfo; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.userinfo ("userID", name, email, password) FROM stdin;
-a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11	sang	sang@sang.com	1234qwer
-88a1e8e8-b27f-402f-b9cb-21dc12601b9e	katrina	ktkt@ktkt.com	1234qwer
+COPY public.userinfo (address, name, email, password, "isAdmin") FROM stdin;
+asdasd	sang	sang@sang.com	sang	t
 \.
 
 
 --
--- TOC entry 3044 (class 2606 OID 16488)
--- Name: condition condition_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 3156 (class 0 OID 0)
+-- Dependencies: 203
+-- Name: contract_index_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.condition
-    ADD CONSTRAINT condition_pkey PRIMARY KEY ("conditionID");
+SELECT pg_catalog.setval('public.contract_index_seq', 1, true);
 
 
 --
--- TOC entry 3040 (class 2606 OID 16465)
--- Name: contract contract_address_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 3017 (class 2606 OID 16684)
+-- Name: contract contract_cntrctAddress_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.contract
-    ADD CONSTRAINT contract_address_key UNIQUE (address);
+    ADD CONSTRAINT "contract_cntrctAddress_key" UNIQUE ("cntrctAddress");
 
 
 --
--- TOC entry 3042 (class 2606 OID 16463)
+-- TOC entry 3019 (class 2606 OID 16682)
 -- Name: contract contract_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.contract
-    ADD CONSTRAINT contract_pkey PRIMARY KEY ("contractID");
+    ADD CONSTRAINT contract_pkey PRIMARY KEY (index);
 
 
 --
--- TOC entry 3046 (class 2606 OID 16563)
--- Name: party party_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.party
-    ADD CONSTRAINT party_pkey PRIMARY KEY ("partyID", "contractID");
-
-
---
--- TOC entry 3036 (class 2606 OID 16558)
+-- TOC entry 3013 (class 2606 OID 16671)
 -- Name: userinfo userinfo_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -197,42 +146,24 @@ ALTER TABLE ONLY public.userinfo
 
 
 --
--- TOC entry 3038 (class 2606 OID 16458)
+-- TOC entry 3015 (class 2606 OID 16669)
 -- Name: userinfo userinfo_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.userinfo
-    ADD CONSTRAINT userinfo_pkey PRIMARY KEY ("userID");
+    ADD CONSTRAINT userinfo_pkey PRIMARY KEY (address);
 
 
 --
--- TOC entry 3048 (class 2606 OID 16489)
--- Name: condition condition_contractID_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.condition
-    ADD CONSTRAINT "condition_contractID_fkey" FOREIGN KEY ("contractID") REFERENCES public.contract("contractID");
-
-
---
--- TOC entry 3047 (class 2606 OID 16552)
--- Name: contract contract_owner_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- TOC entry 3020 (class 2606 OID 16685)
+-- Name: contract contract_ownerAddress_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.contract
-    ADD CONSTRAINT contract_owner_fkey FOREIGN KEY (owner) REFERENCES public.userinfo("userID") NOT VALID;
+    ADD CONSTRAINT "contract_ownerAddress_fkey" FOREIGN KEY ("ownerAddress") REFERENCES public.userinfo(address);
 
 
---
--- TOC entry 3049 (class 2606 OID 16564)
--- Name: party party_contractID_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.party
-    ADD CONSTRAINT "party_contractID_fkey" FOREIGN KEY ("contractID") REFERENCES public.contract("contractID");
-
-
--- Completed on 2021-07-28 12:19:59 AEST
+-- Completed on 2021-07-28 19:24:35 AEST
 
 --
 -- PostgreSQL database dump complete
