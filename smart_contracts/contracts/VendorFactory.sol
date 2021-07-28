@@ -5,24 +5,23 @@ pragma solidity ^0.8.4;
 import "./CloneFactory.sol";
 import "./Vendor.sol";
 
-// events
-
-/// @title Factory contract that creates new contracts with different conditions
+/// Factory contract that creates new contracts with different conditions.
 contract VendorFactory is CloneFactory {
     address private admin;
     address private implementation;
 
-    mapping (int => address) vendors;
-    mapping (int => address) updating;
+    mapping (int => address) vendors;   // main address registry
+    mapping (int => address) updating;  // temporary registry for unapproved updated contracts
 
     event ClonedContract(address _cloned);
     event ApprovedContract(address _approved, int index);
 
     constructor(address _implementation) {
-        implementation = _implementation;   // if this contract is destroyed, all proxies will stop working
+        implementation = _implementation;   // all cloned contracts point to this initial contract
         admin = msg.sender;
     }
 
+    // Initialise a new vendor contract via cloning.
     function createVendor
         ( address _client
         , uint _creationDate
@@ -37,8 +36,8 @@ contract VendorFactory is CloneFactory {
         address newVendor = createClone(implementation);
         Vendor(newVendor).init(_client, _creationDate, _expiryDate, _startDate, _nextBillingDate, _contractHash, _amount);
 
-        if (vendors[_index] != address(0x0)) {  // if an existing contract lies at the index
-            updating[_index] = newVendor;
+        if (vendors[_index] != address(0x0)) {  // check if an existing contract lies at the index
+            updating[_index] = newVendor;       // if so, do not replace it at the index straightaway
         } else {
             vendors[_index] = newVendor;
         }
@@ -47,6 +46,7 @@ contract VendorFactory is CloneFactory {
         return newVendor;
     }
 
+    // Approve a new contract.
     function approve(address _contract, int _index) external returns (address, int) {
         require(payable(msg.sender) == Vendor(_contract).payee(), "Only the payee can approve this contract.");
         Vendor(_contract).approve();
