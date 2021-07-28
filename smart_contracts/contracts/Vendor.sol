@@ -82,7 +82,7 @@ contract Vendor {
 
     function setConds(string[8] memory _names, int[8] memory _values, string[8] memory _operators) external atStage(Stages.Initialising) {
         for (uint i = 0; i < 8; i++) {
-            if (keccak256(bytes(_names[i])) == keccak256(bytes(""))) {
+            if (bytes(_names[i]).length == 0) {
                 endInitStage();
                 return;     // break out of loop when received condition name equals "None"
             }
