@@ -73,8 +73,7 @@ contract Vendor {
 
     // Calculate the block number equivalent to a timestamp.
     function calcDate(uint _billingDate) private view returns (uint) {
-        uint blockInterval = _billingDate/blocksDaily; // timestamp difference in seconds/blocks per second = blocks from now
-        return block.number + blockInterval;
+        return block.number + _billingDate*blocksDaily;
     }
     
     function setConds(string[8] memory _names, int[8] memory _values, string[8] memory _operators) external atStage(Stages.Initialising) {
