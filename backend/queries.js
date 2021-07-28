@@ -86,7 +86,7 @@ const createUser = (request, response) => {
   } else {
     eth.accounts()
       .then(res => {
-        pool.query(`INSERT INTO userinfo (name, email, password, address, isAdmin) VALUES ('${name}', '${email}', '${password}', '${res[num_user]}', ${isAdmin}) returning *`,
+        pool.query(`INSERT INTO userinfo (name, email, password, address, "isAdmin") VALUES ('${name}', '${email}', '${password}', '${res[num_user]}', ${isAdmin}) returning *`,
                 (error, results) => {
           if (error) {
             if (error.constraint === 'userinfo_email_key') {
@@ -187,33 +187,40 @@ const createContract = async (request, response) => {
         , amount 
         } = request.body
   
-  
-  pool.query("INSERT INTO contract (title, description, owner) VALUES ($1, $2, $3) returning *",
-              [title, description, client], 
-              (error, results) => {
+  try{
 
-    if (error) {
-      response.status(400).json(error);
-    }
-     
-    const index = results.rows[0].index;
-    const hash = "";
-
-    const VendorFactory = await eth.VendorFactory();
-    const res = await VendorFactory.methods.createContract(client, expiryDate, startDate, hash, amount, index);
-
-    pool.query("UPDATE contract SET address = $1 WHERE index = $2",
-    [res, index], 
-    (error, results) => {
-    if (error) {
-      response.status(400).json(error);
-    } 
-    response.status(200).json({ contractID: results.rows[0] });
-    })
-  })
-
+    let results = await pool.query
+      ( "INSERT INTO contract (title, description, owner) VALUES ($1, $2, $3) returning *"
+      , [title, description, client]
+      );
+      
+      const index = results.rows[0].index;
+      console.log("Retrieved contract index");
+      const hash = "";
+      
+      const VendorFactory = await eth.VendorFactory();
+      console.log("Retrieved Vendor Factory")
+      const accounts = await eth.accounts();
+      console.log("Retrieved accounts");
+      console.log(accounts)
+      
+      const managerAccount = accounts[0];
+      let res = await VendorFactory.methods.createContract(client, expiryDate, startDate, hash, amount, index).send({"from": managerAccount});
+      console.log("Executed contract")
+      console.log("Created new vendor contract");
+      response.status(200).json({ contractRes: res });
+      
+      // results = await pool.query("UPDATE contract SET address = $1 WHERE index = $2",[res, index])
+      // (error, results) => {
+      // if (error) {
+      //   response.status(400).json(error);
+      // } 
+      // response.status(200).json({ contractID: results.rows[0] });
+      // })
+  } catch(err){
+    response.status(400).json(err);
+  }
 }
-
 // update contracts with contract id  - call functions - justin
 const updateContract = async (request, response) => {
   const contractId = request.params.id;
@@ -244,7 +251,7 @@ module.exports = {
   getContractByIndex,
   getContractByAddress,
   getContractsByUserAddress,
-  getContractsByPayeeAdress,
+  //getContractsByPayeeAdress,
   inviteParty,
   createContract,
   updateContract,

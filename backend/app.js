@@ -32,9 +32,9 @@ app.post('/user', db.createUser);
 app.get('/contract/:index', db.getContractByIndex);
 app.get('/contract/:address', db.getContractByAddress);
 app.get('/contracts/:userAddress', db.getContractsByUserAddress);
-app.get('/contracts/payee/:userAddress', db.getContractsByPayeeAdress);
+//app.get('/contracts/payee/:userAddress', db.getContractsByPayeeAdress);
 app.post('/contract/payee', db.inviteParty);
-app.post('/contract', db.createContract);
+app.post('/contract',  db.createContract);
 app.put('/contract/:index', db.updateContract);
 
 
