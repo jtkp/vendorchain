@@ -20,13 +20,12 @@ function findImports(importPath){
 // Compiles .sol files in "solNames"
 const compileSols = (solNames) => {
     let sources = {}
-    const vendorFile = fs.readFileSync("contracts/Vendor.sol","utf8");
-    sources["Vendor.sol"] = { content: vendorFile };
-    const cloneFactoryFile = fs.readFileSync("contracts/CloneFactory.sol","utf8");
-    sources["CloneFactory.sol"] = { content: cloneFactoryFile };
-    const vendorFactoryFile = fs.readFileSync("contracts/VendorFactory.sol","utf8");
-    sources["VendorFactory.sol"] = { content: vendorFactoryFile};
-    
+    solNames.forEach((value, index, array) => {
+        let sol_file = fs.readFileSync(`contracts/${value}.sol`, 'utf8');
+        sources[value] = {
+            content: sol_file
+        };
+    });
     let input = {
         language: 'Solidity',
         sources: sources,
@@ -45,7 +44,7 @@ const compileSols = (solNames) => {
     return output;
 }
 
-const compiled = compileSols(["Vendor"]);
+const compiled = compileSols(["temp","temp2"]);
 if ("errors" in compiled){
     console.log("Compilation failed");
     console.log(compiled.errors);
@@ -57,11 +56,11 @@ const buildPath = path.resolve(__dirname, 'build');
 fs.removeSync(buildPath);
 fs.ensureDirSync(buildPath);
 
-const vendorContract = contracts["Vendor.sol"]
-fs.outputJsonSync(path.resolve(buildPath,'Vendor.json'), vendorContract["Vendor"]); 
-const cloneFactoryContract = contracts["CloneFactory.sol"]
-fs.outputJsonSync(path.resolve(buildPath,'CloneFactory.json'), cloneFactoryContract["CloneFactory"]); 
-const vendorFactoryContract = contracts["VendorFactory.sol"]
-fs.outputJsonSync(path.resolve(buildPath,'VendorFactory.json'), vendorFactoryContract["VendorFactory"]); 
-
+// Store contracts?
+for (let contract in contracts) {
+    fs.outputJsonSync(
+      path.resolve(buildPath, contract.replace(':', '') + '.json'),
+      contracts[contract]
+    );
+  }
 process.exit();

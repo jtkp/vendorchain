@@ -14,12 +14,13 @@ const verify = (request, response) => {
     }
 
     // Payload is well formatted
+
     err = sendOnChain();
     if (err !== null){
         res = {"error": err}
         return response.send(res);
     }
-    
+
     // The data is on chain
     response.send({
         "data": data
@@ -39,45 +40,40 @@ data must be of the form
 {
     "port": int (id of the port)
     "bandwidth": int (bandwidth in mb)
-    "epochTimestamp": epoch in seconds
+    "timestamp": YYYY-MM-DD
 }
 */
-
 const correctFormat = (data) => {
     if (typeof(data) !== 'object'){
         return false;
     }
-    fields = ['port', 'bandwidth','epochTimestamp'];
+    fields = ['port', 'bandwidth','timestamp'];
     for (const key in data) {
         if (!fields.includes(key)){
-            return `Sent data has extra key ${key}`;
+            return false;
         }
     }
     // keys(data) ⊂ "fields" 
     for (let field in fields){
         if(!field in data){
-            return `Send data does not contain the required field ${field}`;
+            return false;
         } 
     }
-    // "fields" ⊂ keys(data)   
-    // "data" only has the fields port, bandwith and timestamp
-    
+    // fields ⊂ keys(data) 
+    // fields = keys(data)
     bandwidth = data["bandwidth"]
     if(typeof(bandwidth) !== 'number' || bandwidth < 0){
         return "bandwidth must be a non-negative integer";
     }
     // Bandwidth is well formatted
-    
     port = data["port"]
     if(typeof(port) !== 'number' || port < 0){
         return "port must be a non-negative integer";
     }
     // Port is well formatted
-    epochTimestamp = data["epochTimestamp"]
-    if(typeof(epochTimestamp) !== 'number' || port < 0){
-        return "timestamp must be a non-negative integer";
-    }
-  
+
+    // TODO: Check if timestamp is well formatted
+    
     return null
 }
 
