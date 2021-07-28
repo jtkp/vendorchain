@@ -104,7 +104,7 @@ contract Vendor {
     ////////////////////////////////////////////
 
     // Assumes client has already approved because the contract is deployed.
-    function approve() external atStage(Stages.Pending) {
+    function approve() external {
         require(msg.sender == admin, "Cannot call this function directly, use VendorFactory.");
         payeeApproved = true;
         stage = Stages.Active;

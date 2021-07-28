@@ -137,22 +137,19 @@ const getContractsByPayeeAddress = (request, response) => {
       response.status(200).json(results.rows)
     }
   })
-
-
 }
 
 // invite parties to a contract  - call functions - justin
 const inviteParty = async (request, response) => {
-  const {contractId, partyId} = request.body;
+  const {contractAddress, partyAddress} = request.body;
 
-  // partyAddress = query here;
-
-  // contractAddress = query here;
+  const accounts = await eth.accounts();
+  const managerAccount = accounts[0];
 
   const Vendor = await eth.Vendor(contractAddress);
-  const result = await Vendor.methods.setPayee(partyAddress).send();
+  await Vendor.methods.setPayee(partyAddress).send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
 
-  pool.query('INSERT INTO party (payee, address) VALUES ($1, $2) returning *', [partyId, contractId], (error, results) => {
+  pool.query('INSERT INTO party (payee, address) VALUES ($1, $2) returning *', [partyAddress, contractAddress], (error, results) => {
     if (error) {
       response.status(400).json(error);
     } else {
@@ -163,11 +160,30 @@ const inviteParty = async (request, response) => {
 
 // approve a contract
 const approveContract = async (request, response) => {
-  const contractAddress = request.params.address;
-  const {payeeAddress, index} = request.body;
+  try {
+    const contractAddress = request.params.address;
+    const { payeeAddress, index } = request.body;
+    const accounts = await eth.accounts();
+    const managerAccount = accounts[0];
 
-  const VendorFactory = await eth.VendorFactory();
-  const result = await VendorFactory.methods.approveContract(contractAddress, index).send({'from': payeeAddress});
+    const Vendor = await eth.Vendor(contractAddress);
+    let payee = await Vendor.methods.stage().call({from: payeeAddress});
+    console.log(payee);
+    // await Vendor.methods.endInitStage().send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
+    payee = await Vendor.methods.payee().call({from: payeeAddress});
+    console.log(payee);
+    payee = await Vendor.methods.payeeApproved().call({from: payeeAddress});
+    console.log(payee);
+    const VendorFactory = await eth.VendorFactory();
+    const result = await VendorFactory.methods.approve(contractAddress, index).send({'from': payeeAddress, gasPrice: 1000, gas: 1000000});
+    payee = await Vendor.methods.payeeApproved().call({from: payeeAddress});
+    console.log(payee);
+    response.status(200).json({"status": "success"});
+  } catch(err){
+    console.log("error")
+    response.status(400).json(err);
+  }
+
 }
 
 // create a contract  - call functions - daigo
@@ -205,12 +221,8 @@ const createContract = async (request, response) => {
       let res = await VendorFactory.methods.createVendor(client, expiryDate, startDate, hash, amount, index)
       .send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
 
-  
       const newVendorContractAddress = res.events.ClonedContract.returnValues._cloned;
-      console.log(newVendorContractAddress)
       results = await pool.query("UPDATE contract SET address = $1 WHERE index = $2",[newVendorContractAddress, index])
-      
-      
       
       const names = [];
       const values = [];
