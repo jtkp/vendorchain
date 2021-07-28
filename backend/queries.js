@@ -49,7 +49,7 @@ const getUserByAddress = (request, response) => {
   })
 }
 
-// get user by email - call functions
+// get user by email
 const getUserByEmail = (request, response) => {
   const email = request.params.email;
   pool.query('SELECT * FROM userinfo WHERE email = $1', [email], (error, results) => {
@@ -114,7 +114,7 @@ const createUser = (request, response) => {
 
 /* ================================ Contracts ================================*/
 
-// get contract by a specific contract id - call functions
+// get contract by a specific contract id - call functions - justin
 const getContractByIndex = (request, response) => {
   // get parameters from url
   const id = request.params.index;
@@ -128,7 +128,7 @@ const getContractByIndex = (request, response) => {
   })
 }
 
-// get contract by a specific address - call functions
+// get contract by a specific address - call functions - justin
 const getContractByAddress = (request, response) => {
   // get parameters from url
   const id = request.params.index;
@@ -142,7 +142,7 @@ const getContractByAddress = (request, response) => {
   })
 }
 
-// get all contracts created by a specific user 
+// get all contracts created by a specific user - katrina
 const getContractsByUserAddress = (request, response) => {
   // get parameters from url
   const address = request.params.userAddress;
@@ -157,7 +157,7 @@ const getContractsByUserAddress = (request, response) => {
   })
 }
 
-// invite parties to a contract  - call functions
+// invite parties to a contract  - call functions - justin
 const inviteParty = (request, response) => {
   const { contractId, partiesId } = request.body;
   let query = 'INSERT INTO party ("partyID", "contractID") VALUES';
@@ -177,7 +177,7 @@ const inviteParty = (request, response) => {
   })
 }
 
-// create a contract  - call functions
+// create a contract  - call functions - daigo
 const createContract = async (request, response) => {
   const { title
         , description 
@@ -214,7 +214,7 @@ const createContract = async (request, response) => {
 
 }
 
-// update contracts with contract id  - call functions
+// update contracts with contract id  - call functions - justin
 const updateContract = (request, response) => {
   const contractId = request.params.id;
   const { newTitle, newDescription, newAddress } = request.body;
