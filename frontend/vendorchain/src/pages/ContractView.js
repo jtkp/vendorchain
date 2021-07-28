@@ -8,7 +8,6 @@ import {
 } from '@material-ui/core';
   
 import React from 'react';
-import { Formik } from 'formik';
 // import { makeStyles } from '@material-ui/core/styles';
 import styled from 'styled-components';
 import { Link, useParams, useHistory } from 'react-router-dom';
@@ -24,40 +23,24 @@ const StyledLayout = styled.div`
 `;
 
 
-const ContractEdit = () => {
+const ContractView = () => {
     const params = useParams();
     // const classes = useStyles();
-    const history = useHistory();
     const [conditions, setConditions] = React.useState([]);
     const [contract, setContract] = React.useState({});
     const [payee, setPayee] = React.useState({});
     const [btnValue, setBtnValue] = React.useState('');
 
-    // const handleSubmit = (values, { setSubmitting }) => {
-    //     const body = JSON.stringify({
-            
-    //     })
-    //     // TODO: submit a new contract
-    // }
+    const handleApprove = (e) => {
+        
 
-    const conditionObj = {
-        categories: '',
-        operator: '',
-        input: 0,
     }
-    
-    const addCondition = () => {
-        setConditions([...conditions, conditionObj]);
-    }
+
     const removeCondition = (e) => {
         const newConditions = [...conditions];
         //TODO:
         // conditions.splice(conditions.indexOf(e.target), 1);
         setConditions(newConditions);
-    }
-
-    const handleInvite = (e) => {
-
     }
 
     React.useEffect(() => {
@@ -146,21 +129,10 @@ return (
                         alignItems='flex-end'
                         height='100%'
                     >
-                        <Button variant='outlined' color='primary' size='large' disabled={btnValue === ''} onClick={handleInvite}>Invite Party</Button>
-                        <Button variant='outlined' color='primary' size='large' disabled={btnValue === ''}>{btnValue}</Button>
+                        <Button variant='outlined' color='primary' size='large' disabled={btnValue !== 'Approve'} onClick={handleApprove}>{btnValue}</Button>
                     </Box>
                 </Grid>
                 <Grid item xs={12} md={12} lg={12}>
-                    
-                    <Button
-                        variant='outlined' 
-                        color='primary' 
-                        size='large' 
-                        style={{width:'100%'}}
-                        onClick={addCondition}
-                    >
-                        Add conditions
-                    </Button>
                     <Box
                         display='flex'
                         flexDirection='column'
@@ -180,4 +152,4 @@ return (
 }
 
 
-export default ContractEdit;
+export default ContractView;

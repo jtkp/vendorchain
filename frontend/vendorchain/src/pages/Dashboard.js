@@ -105,7 +105,7 @@ const Dashboard = () => {
                     <Typography variant='h4'>My contracts</Typography>
                     {
                       contracts.map((c, idx) => {
-                        console.log(c)
+                        console.log('contract', c)
                         if (c !== undefined) {
                           return (
                             <Button 
@@ -113,15 +113,15 @@ const Dashboard = () => {
                               variant='outlined'
                               className={classes.root}
                               style={{ margin: '10px' }}
-                              href={`/contract/edit/${c.contractID}`}  
+                              href={`/contract/edit/${c.address}`}  
                               key={idx}
                             >
                                 <ListItemText
                                   primary={c.title}
-                                  secondary={`ID: ${c.contractID}`}
+                                  secondary={`ID: ${c.address}`}
                                 />
                                 <ListItemText
-                                  secondary={c.state}
+                                  secondary={'Index: ' + c.index}
                                 />
                             </Button>
                           )
@@ -136,8 +136,8 @@ const Dashboard = () => {
                   <List>
                     <Typography variant='h4'>Contracts to pay</Typography>
                     {
-                      contracts.map((c, idx) => {
-                        console.log(c)
+                      invited.map((c, idx) => {
+                        console.log('invited', c)
                         if (c !== undefined) {
                           return (
                             <Button 
@@ -145,15 +145,15 @@ const Dashboard = () => {
                               variant='outlined'
                               className={classes.root}
                               style={{ margin: '10px' }}
-                              href={`/contract/edit/${c.contractID}`}  
+                              href={`/contract/view/${c.address}`}  
                               key={idx}
                             >
                                 <ListItemText
                                   primary={c.title}
-                                  secondary={`ID: ${c.contractID}`}
+                                  secondary={`ID: ${c.address}`}
                                 />
                                 <ListItemText
-                                  secondary={c.state}
+                                  secondary={'Index: ' + c.index}
                                 />
                             </Button>
                           )

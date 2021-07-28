@@ -27,6 +27,7 @@ app.get('/vendors', db.getVendors);
 app.get('/user/:address', db.getUserByAddress);
 app.get('/user/email/:email', db.getUserByEmail);
 app.post('/user', db.createUser);
+app.get('/payee/:contractAddress', db.getPayeeByContractAddress);
 
 /* ================================ Contracts ================================*/
 app.get('/contract/:address', db.getContractByAddress);
