@@ -10,7 +10,7 @@ const Vendor = async (address) => await new web3.eth.Contract(
     address
     );
 
-const VendorFactory = async () => await web3.eth.Contract(
+const VendorFactory = async () => await new web3.eth.Contract(
     VendorFactoryJson.abi,
     addresses["VendorFactory"]
     );
