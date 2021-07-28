@@ -214,6 +214,7 @@ const createContract = (request, response) => {
     })
     .catch(err => {
       console.log("ERROR creating contract", err);
+      response.status(400).json(err);
     })
 
   })
