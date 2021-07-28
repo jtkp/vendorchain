@@ -22,6 +22,8 @@ const compileSols = (solNames) => {
     let sources = {}
     const vendorFile = fs.readFileSync("contracts/Vendor.sol","utf8");
     sources["Vendor.sol"] = { content: vendorFile };
+    const cloneFactoryFile = fs.readFileSync("contracts/CloneFactory.sol","utf8");
+    sources["CloneFactory.sol"] = { content: cloneFactoryFile };
     const vendorFactoryFile = fs.readFileSync("contracts/VendorFactory.sol","utf8");
     sources["VendorFactory.sol"] = { content: vendorFactoryFile};
     
@@ -57,6 +59,8 @@ fs.ensureDirSync(buildPath);
 
 const vendorContract = contracts["Vendor.sol"]
 fs.outputJsonSync(path.resolve(buildPath,'Vendor.json'), vendorContract["Vendor"]); 
+const cloneFactoryContract = contracts["CloneFactory.sol"]
+fs.outputJsonSync(path.resolve(buildPath,'CloneFactory.json'), cloneFactoryContract["CloneFactory"]); 
 const vendorFactoryContract = contracts["VendorFactory.sol"]
 fs.outputJsonSync(path.resolve(buildPath,'VendorFactory.json'), vendorFactoryContract["VendorFactory"]); 
 

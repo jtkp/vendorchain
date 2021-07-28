@@ -23,7 +23,7 @@ const getUsers = (request, response) => {
 
 // get user by email - Katrina - checked
 const getUserByEmail = (request, response) => {
-  const { email } = request.body;
+  const email = request.params.email;
   pool.query('SELECT * FROM userinfo WHERE email = $1', [email], (error, results) => {
     if (error) {
       response.status(400).json(error);
@@ -89,7 +89,7 @@ const getContractById = (request, response) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send(results.rows)
+      response.status(200).json(results.rows)
     }
   })
 }
@@ -104,7 +104,7 @@ const getContractsByUserId = (request, response) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send(results.rows)
+      response.status(200).json(results.rows)
     }
   })
 }
@@ -120,7 +120,7 @@ const getParties  = (request, response) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send(results.rows);
+      response.status(200).json(results.rows);
     }
   });
 }
@@ -135,7 +135,7 @@ const deleteContractById = (request, response) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send(`Contract ${id} has been deleted`);
+      response.status(200).json(`Contract ${id} has been deleted`);
     }
   })
 }
@@ -155,7 +155,7 @@ const inviteParties = (request, response) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send({ parties: partiesId });
+      response.status(200).json({ parties: partiesId });
     }
   })
 }
@@ -171,7 +171,7 @@ const createContract = (request, response) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send({ contractID: results.rows[0].contractID })
+      response.status(200).json({ contractID: results.rows[0].contractID })
 
     }
   })
@@ -189,7 +189,7 @@ const updateContract = (request, response) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send(results.rows);
+      response.status(200).json(results.rows);
     }
   })
 
@@ -208,7 +208,7 @@ const updateContractState = (request, response) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send(results.rows);
+      response.status(200).json(results.rows);
     }
   })
 }
@@ -256,7 +256,7 @@ const addCondition = (request, response) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send(results.rows);
+      response.status(200).json(results.rows);
     }
   })
 
@@ -273,7 +273,7 @@ const updateConditionById = (request, response) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send(results.rows);
+      response.status(200).json(results.rows);
     }
   })
 
@@ -289,7 +289,7 @@ const deleteConditionById = (request, response) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).send({ Success: `Condition ${id} has been deleted` });
+      response.status(200).json({ Success: `Condition ${id} has been deleted` });
     }
   })
 }
