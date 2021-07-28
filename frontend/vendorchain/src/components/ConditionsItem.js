@@ -32,6 +32,8 @@ const Conditionsitem = ({ condition, idx, removeCondition }) => {
   const [id, setId] = React.useState(-1); 
   const [category, setCategory] = React.useState('');
   const [operator, setOperator] = React.useState('');
+//   const [lo, setLo] = React.useState(0);
+//   const [hi, setHi] = React.useState(0);
   const [number, setNumber] = React.useState(0);
 
 
@@ -39,7 +41,9 @@ const Conditionsitem = ({ condition, idx, removeCondition }) => {
     setId(condition.id);
     setCategory(condition.categories);
     setOperator(condition.operator);
-    setNumber(condition.input);
+    // setLo(condition.input);
+    // setHi(condition.input)
+    setNumber(condition.value);
   }, []);
 
 
@@ -87,8 +91,8 @@ const Conditionsitem = ({ condition, idx, removeCondition }) => {
                 <FormControl className={classes.formControl}>
                     <InputLabel id="number-label" />
                     <TextField
-                        id="number"
-                        label="Number"
+                        id="value"
+                        label="Value" 
                         type="number"
                         value={number}
                         onChange={(e) => setNumber(e.target.value)}
@@ -98,6 +102,20 @@ const Conditionsitem = ({ condition, idx, removeCondition }) => {
                     />
                     <FormHelperText>Required</FormHelperText>
                 </FormControl>
+                {/* <FormControl className={classes.formControl}>
+                    <InputLabel id="number-label" />
+                    <TextField
+                        id="range-hi"
+                        label="Range-hi"
+                        type="number"
+                        value={number}
+                        onChange={(e) => setNumber(e.target.value)}
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                    />
+                    <FormHelperText>Required</FormHelperText>
+                </FormControl> */}
             <div>
                 <IconButton edge="end" aria-label="delete" onClick={removeCondition}>
                     <DeleteIcon />

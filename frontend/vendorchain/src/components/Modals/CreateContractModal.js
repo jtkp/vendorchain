@@ -10,8 +10,9 @@ import {
 } from '@material-ui/core';
 import { useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
+import makeAPIRequest from '../../Api';
 
-const CreateContractModal = ({ setContracts }) => {
+const CreateContractModal = ({ contracts, setContracts }) => {
   const [open, setOpen] = React.useState(false);
   const [name, setName] = React.useState('');
   const [errorText, setErrorText] = React.useState();
@@ -42,15 +43,22 @@ const CreateContractModal = ({ setContracts }) => {
 
   const createNewContract = (value) => {
     const newC = JSON.stringify({
-      name: value,
-      status: 'Saved'
+      title: value,
+      description: "sample text",
+      userId: JSON.parse(localStorage.getItem('user')).userID,
     })
-    // TODO: push the contract to db
-    let contractList = JSON.parse(localStorage.getItem('contract')).contracts;
-    contractList.push(newC);
-    setContracts([contractList]);
-    localStorage.setItem('contract', JSON.stringify({ contracts: contractList }));
-    alert('Successfully create contract ' + value);
+
+    makeAPIRequest('contract', 'POST', null, null, newC)
+      .then(res => {
+        alert('Successfully create contract ' + value);
+        return res;
+      }).then (res => setContracts([...contracts, res[0]])
+      ).then(() => window.location.reload()
+      ).catch(err => {
+        console.log(err);
+        alert("Something bad happened, please try again.")
+      })
+    
   }
 
   return (

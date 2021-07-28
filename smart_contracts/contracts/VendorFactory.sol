@@ -23,11 +23,19 @@ contract VendorFactory is CloneFactory {
         admin = msg.sender;
     }
 
-    function createVendor(address _client, uint _creationDate, uint _expiryDate, uint _startDate, uint _nextBillingDate,
-                          uint _contractHash, uint _amount, int _index) external onlyAdmin() returns (address) {
+    function createVendor
+        ( address _client
+        , uint _creationDate
+        , uint _expiryDate
+        , uint _startDate
+        , uint _nextBillingDate
+        , uint _contractHash
+        , uint _amount
+        , int _index 
+        ) external onlyAdmin() returns (address) {
 
         address newVendor = createClone(implementation);
-        Vendor(newVendor).init(_client, _payee, _creationDate, _expiryDate, _startDate, _nextBillingDate, _contractHash, _amount);
+        Vendor(newVendor).init(_client, _creationDate, _expiryDate, _startDate, _nextBillingDate, _contractHash, _amount);
 
         if (vendors[_index] != address(0x0)) {  // if an existing contract lies at the index
             updating[_index] = newVendor;
