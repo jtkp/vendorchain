@@ -40,7 +40,7 @@ contract VendorFactory is CloneFactory {
             vendors[_index] = newVendor;
         }
 
-        // emit ClonedContract(newVendor);
+        emit ClonedContract(newVendor);
         return newVendor;
     }
 
