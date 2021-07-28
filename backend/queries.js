@@ -194,26 +194,23 @@ const createContract = async (request, response) => {
 
     if (error) {
       response.status(400).json(error);
-    } 
+    }
+     
     const index = results.rows[0].index;
     const hash = "";
 
-    eth.accounts()
-    .then((accounts)=>{
-      const account = accounts[0];
-      const VendorFactory = await             eth.VendorFactory();
-      const          
+    const VendorFactory = await eth.VendorFactory();
+    const res = await VendorFactory.methods.createContract(client, expiryDate, startDate, hash, amount, index);
 
+    pool.query("UPDATE contract SET address = $1 WHERE index = $2",
+    [res, index], 
+    (error, results) => {
+    if (error) {
+      response.status(400).json(error);
+    } 
+    response.status(200).json({ contractID: results.rows[0] });
     })
-    
-    
-
-
-
-    response.status(200).json({ contractID: results.rows[0] })
-
   })
-
 
 }
 
