@@ -1,4 +1,4 @@
-import { Box, Container, Grid, Link, Button } from '@material-ui/core';
+import { Box, Container, Grid, Link, Button, Typography } from '@material-ui/core';
 import { useHistory } from 'react-router-dom';
 import React from 'react';
 import Title from '../components/Titles/Title';
@@ -37,6 +37,7 @@ const Dashboard = () => {
   const history = useHistory();
   const classes = useStyles();
   const [contracts, setContracts] = React.useState([]);
+  const [invited, setInvited] = React.useState([]);
 
   React.useEffect(() => {
     const loggedin = localStorage.getItem('user');
@@ -44,13 +45,26 @@ const Dashboard = () => {
 
     // if logged in
     if (loggedin != null) {
-      // TODO: fetch dashboard info and contracts here
-      makeAPIRequest(`contracts/${user.userID}`, 'GET', null, null, null)
-        .then (res => {
-          console.log(res)
-          setContracts(res);
+
+      if (JSON.parse(localStorage.getItem('user')).isAdmin) {
+        // fetch contracts created by myself
+        makeAPIRequest(`contracts/${user.address}`, 'GET', null, null, null)
+          .then (res => {
+            console.log('my contracts', res)
+            setContracts(res);
+          }).catch(err => {
+            alert('Fetch contracts failed, please try again later');
+            console.log(err);
+          })
+      }
+      
+      // fetch contracts that invite me as payee
+      makeAPIRequest(`contracts/payee/${user.address}`, 'GET', null, null, null)
+        .then(res => {
+          console.log('contracts invited', res);
+          setInvited(res);
         }).catch(err => {
-          alert('Fetch contracts failed, please try again later');
+          alert('Fetch contracts to pay failed, please try again later');
           console.log(err);
         })
 
@@ -73,44 +87,81 @@ const Dashboard = () => {
         localStorage.getItem('user') !== null
           ? (
               <Box>
-                <Subtitle>You currently have {contracts.length} contracts in total. <br/>Click them to edit the contract, or click the button below to create/import a new contract.</Subtitle>
+                <Subtitle>Click them to view/edit the contract.</Subtitle>
                 <Box 
                   display='flex' 
                   flexDirection='row'
                   justifyContent='space-around'
                   p={3}
                 >
+                {
+                  JSON.parse(localStorage.getItem('user')).isAdmin && 
                   <CreateContractModal contracts={contracts} setContracts={setContracts}/>
-                  <ImportModal contracts={contracts} setContracts={setContracts}/>
+                }
                 </Box>
+                {
+                  JSON.parse(localStorage.getItem('user')).isAdmin && 
                   <List>
+                    <Typography variant='h4'>My contracts</Typography>
                     {
-                        contracts.map((c, idx) => {
-                          console.log(c)
-                          if (c !== undefined) {
-                            return (
-                              <Button 
-                                color='primary' 
-                                variant='outlined'
-                                className={classes.root}
-                                style={{ margin: '10px' }}
-                                href={`/contract/edit/${c.contractID}`}  
-                                key={idx}
-                              >
-                                  <ListItemText
-                                    primary={c.title}
-                                    secondary={`ID: ${c.contractID}`}
-                                  />
-                                  <ListItemText
-                                    secondary={c.state}
-                                  />
-                              </Button>
-                            )
-                          } else {
-                            return <p key={idx}>Loading...</p>
-                          }
-                          
-                        })
+                      contracts.map((c, idx) => {
+                        console.log(c)
+                        if (c !== undefined) {
+                          return (
+                            <Button 
+                              color='primary' 
+                              variant='outlined'
+                              className={classes.root}
+                              style={{ margin: '10px' }}
+                              href={`/contract/edit/${c.contractID}`}  
+                              key={idx}
+                            >
+                                <ListItemText
+                                  primary={c.title}
+                                  secondary={`ID: ${c.contractID}`}
+                                />
+                                <ListItemText
+                                  secondary={c.state}
+                                />
+                            </Button>
+                          )
+                        } else {
+                          return <p key={idx}>Loading...</p>
+                        }
+                        
+                      })
+                    }
+                  </List>
+                }
+                  <List>
+                    <Typography variant='h4'>Contracts to pay</Typography>
+                    {
+                      contracts.map((c, idx) => {
+                        console.log(c)
+                        if (c !== undefined) {
+                          return (
+                            <Button 
+                              color='primary' 
+                              variant='outlined'
+                              className={classes.root}
+                              style={{ margin: '10px' }}
+                              href={`/contract/edit/${c.contractID}`}  
+                              key={idx}
+                            >
+                                <ListItemText
+                                  primary={c.title}
+                                  secondary={`ID: ${c.contractID}`}
+                                />
+                                <ListItemText
+                                  secondary={c.state}
+                                />
+                            </Button>
+                          )
+                        } else {
+                          return <p key={idx}>Loading...</p>
+                        }
+                        
+                      })
                     }
                   </List>
               </Box>

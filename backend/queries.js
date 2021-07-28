@@ -93,7 +93,7 @@ const createUser = (request, response) => {
       })
       .catch(err => {
         console.log("ERROR getting eth accounts.");
-        response.status(404).send("ERROR getting eth accoutns");
+        response.status(404).send("ERROR getting eth accounts");
       })
   }
 }
@@ -105,10 +105,12 @@ const getContractByAddress = (request, response) => {
   // get parameters from url
   const contractAddress = request.params.address;
 
-  const Vendor = await eth.Vendor(contractAddress);
-  const result = await Vendor.methods.getDetails().send();
-
-  response.status(200).json(result);
+  Vendor(contractAddress)
+    .methods
+    .getDetails()
+    .send()
+    .then(res => response.status(200).json(res))
+    .catch(err => response.status(400).send("ERROR getting contract"));
 }
 
 // get all contracts created by a specific user - katrina
@@ -141,30 +143,20 @@ const getContractsByPayeeAddress = (request, response) => {
 
 // invite parties to a contract  - call functions - justin
 const inviteParty = async (request, response) => {
-  const {contractId, partiesId} = request.body;
+  const {contractId, partyId} = request.body;
 
-  let query = 'SELECT address FROM userinfo WHERE id = $1';
   // partyAddress = query here;
 
-  query = 'SELECT address FROM contract WHERE contractID = $1';
   // contractAddress = query here;
 
   const Vendor = await eth.Vendor(contractAddress);
   const result = await Vendor.methods.setPayee(partyAddress).send();
 
-  query = 'INSERT INTO party ("partyID", "contractID") VALUES';
-
-  partiesId.map((p) => {
-    query += ` ('${p}','${contractId}'),`;
-  });
-
-  query = query.slice(0, -1);
-  query += ';';
-  pool.query(query, (error, results) => {
+  pool.query('INSERT INTO party (payee, address) VALUES ($1, $2) returning *', [partyId, contractId], (error, results) => {
     if (error) {
       response.status(400).json(error);
     } else {
-      response.status(200).json({ parties: partiesId });
+      response.status(200).json(results.rows);
     }
   })
 }
@@ -192,53 +184,55 @@ const createContract = (request, response) => {
   
   pool.query("INSERT INTO contract (title, description, owner) VALUES ($1, $2, $3) returning *",
               [title, description, client], 
-              (error, results) => {
+              (error, res) => {
 
     if (error) {
-      response.status(400).json(error);
-    }
-     
-    const index = results.rows[0].index;
-    const hash = "";
-
-    const VendorFactory = await eth.VendorFactory();
-    const address = await VendorFactory.methods.createContract(client, expiryDate, startDate, hash, amount, index).send();
-
-    pool.query("UPDATE contract SET address = $1 WHERE index = $2",
-    [address, index], 
-    (error, results) => {
-    if (error) {
-      response.status(400).json(error);
-    }
-    // names // string[8]
-    // , values // int[8]
-    // , operators // string[8]
-
-    const names = [];
-    const values = [];
-    const operators = [];
-
-    for (var i = 0; i < 8; i++) {
-      names[i] = '';
-      values[i] = 0;
-      operators[i] = '';
-    }
-
-    for (var i = 0; i < conditions.length; i++) {
-      names[i] = conditions[i]['category'];
-      values[i] = conditions[i]['value'];
-      operators[i] = conditions[i]['operator'];
-    }
-
-    const Vendor = await eth.Vendor(address);
-    const res = await Vendor.methods.setConds(names, values, operators).send();
-
-    response.status(200).json({ contractID: results.rows[0] });
-    })
-    .catch(err => {
       console.log("ERROR creating contract", err);
       response.status(400).json(err);
-    })
+    } else {
+      const index = res.rows[0].index;
+      const hash = "";
+  
+      const VendorFactory = await eth.VendorFactory();
+      const address = await VendorFactory.methods.createContract(client, expiryDate, startDate, hash, amount, index).send();
+  
+      pool.query("UPDATE contract SET address = $1 WHERE index = $2 returning *",
+      [address, index], 
+      (error, results) => {
+        if (error) {
+          console.log("ERROR creating contract", err)
+          response.status(400).json(error);
+
+        } else {
+          // names // string[8]
+          // , values // int[8]
+          // , operators // string[8]
+    
+          const names = [];
+          const values = [];
+          const operators = [];
+    
+          for (var i = 0; i < 8; i++) {
+            names[i] = '';
+            values[i] = 0;
+            operators[i] = '';
+          }
+    
+          for (var i = 0; i < conditions.length; i++) {
+            names[i] = conditions[i]['category'];
+            values[i] = conditions[i]['value'];
+            operators[i] = conditions[i]['operator'];
+          }
+    
+          const Vendor = await eth.Vendor(address);
+          const res = await Vendor.methods.setConds(names, values, operators).send();
+    
+          response.status(200).json(results.rows[0]);
+        }
+      })
+      
+    }
+     
 
   })
 

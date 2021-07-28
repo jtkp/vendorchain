@@ -1,4 +1,4 @@
-import { AppBar, Button, Toolbar, Typography } from '@material-ui/core';
+import { AppBar, Box, Button, Toolbar, Typography } from '@material-ui/core';
 import React from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
@@ -43,10 +43,11 @@ const AppHeader = ({ logout }) => {
             localStorage.getItem('user')
               /* if not logged in, show login/register button */
               ? (
-                  <div>
+                  <Box display='flex' flexDirection='row'>
+                    { JSON.parse(localStorage.getItem('user')).isAdmin ? <Typography varaint='h3'>Admin</Typography> : <></>}
                     <Button component={ Link } color="inherit" to='/dashboard'>Dashboard</Button>
                     <Button component={ Link } color="inherit" to='/home' onClick={handleLogout}>Logout</Button>
-                  </div>
+                  </Box>
                 )
               /* if logged in, show dashboard and logout button */
               : (
