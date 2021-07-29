@@ -32,8 +32,6 @@ const Conditionsitem = ({ condition, idx, removeCondition }) => {
   const [id, setId] = React.useState(-1); 
   const [category, setCategory] = React.useState('');
   const [operator, setOperator] = React.useState('');
-//   const [lo, setLo] = React.useState(0);
-//   const [hi, setHi] = React.useState(0);
   const [number, setNumber] = React.useState(0);
 
 
@@ -54,7 +52,7 @@ const Conditionsitem = ({ condition, idx, removeCondition }) => {
         variant='outlined'
         style={{ marginTop: '10px', marginBottom: '10px', padding: '20px'}}
     >
-        <Typography variant="h6">id = {id}</Typography>
+        <Typography variant="h6">{idx}.</Typography>
         <Box display='flex' flexDirection='row' justifyContent='space-between'>
                 <FormControl className={classes.formControl}>
                     <InputLabel id="category-label">Category</InputLabel>
@@ -79,12 +77,13 @@ const Conditionsitem = ({ condition, idx, removeCondition }) => {
                         onChange={(e) => setOperator(e.target.value)}
                         className={classes.selectEmpty}
                     >
-                        <MenuItem value=""></MenuItem>
+                        <MenuItem value={''}></MenuItem>
                         <MenuItem value="<">{'<'}</MenuItem>
                         <MenuItem value="<=">{'<='}</MenuItem>
                         <MenuItem value=">">{'>'}</MenuItem>
                         <MenuItem value=">=">{'>='}</MenuItem>
                         <MenuItem value="=">{'='}</MenuItem>
+                        <MenuItem value="!=">{'!='}</MenuItem>
                     </Select>
                     <FormHelperText>Required</FormHelperText>
                 </FormControl>
@@ -102,20 +101,7 @@ const Conditionsitem = ({ condition, idx, removeCondition }) => {
                     />
                     <FormHelperText>Required</FormHelperText>
                 </FormControl>
-                {/* <FormControl className={classes.formControl}>
-                    <InputLabel id="number-label" />
-                    <TextField
-                        id="range-hi"
-                        label="Range-hi"
-                        type="number"
-                        value={number}
-                        onChange={(e) => setNumber(e.target.value)}
-                        InputLabelProps={{
-                            shrink: true,
-                        }}
-                    />
-                    <FormHelperText>Required</FormHelperText>
-                </FormControl> */}
+                
             <div>
                 <IconButton edge="end" aria-label="delete" onClick={removeCondition}>
                     <DeleteIcon />

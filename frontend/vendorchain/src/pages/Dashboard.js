@@ -51,6 +51,11 @@ const Dashboard = () => {
         makeAPIRequest(`contracts/${user.address}`, 'GET', null, null, null)
           .then (res => {
             console.log('my contracts', res)
+            res.expiryDate = +res.expiryDate;
+            res.nextBillingDate = +res.nextBillingDate;
+            res.prevBillingDate = +res.prevBillingDate;
+            res.startDate = +res.startDate;
+            console.log(res)
             setContracts(res);
           }).catch(err => {
             alert('Fetch contracts failed, please try again later');

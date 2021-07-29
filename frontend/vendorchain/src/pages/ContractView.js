@@ -113,7 +113,7 @@ return (
                     <Typography variant='body2'>{contract.description}</Typography>
                     <hr />
                     <Typography variant='h6'>Payee</Typography>
-                    <Typography varaint='body1'>{payee.name}</Typography>
+                    <Typography varaint='body1'>{ payee === undefined ? '' : payee.name}</Typography>
                 </Grid>
                 <Grid item xs={12} md={6} lg={6}>
                     <Box

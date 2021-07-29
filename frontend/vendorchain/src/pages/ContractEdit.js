@@ -79,25 +79,36 @@ const ContractEdit = () => {
         makeAPIRequest(`contract/${params.address}`, 'GET', null, null, null) 
             .then(res => {
                 console.log(res);
+
                 setContract(res);
-                setConditions(res.conditions);
                 // if (res.stages === 1) setBtnValue('Approve');
                 // else if (res.stages === 3) setBtnValue('Approved');
                 // else setBtnValue('No Action Required');
+                return res;
+            }).then(res => {
+                // set conditions
+                const cons = [];
+                res.names.map((n,idx) => {
+                    const tmp = {};
+                    tmp.name = n;
+                    tmp.operator = res.operators[idx];
+               
+                    tmp.value = +res.values[idx];
+
+                    cons.push(tmp);
+                })
+                console.log('condition:', cons);
+                setConditions(cons);
+                if (res.payee !== "0x0000000000000000000000000000000000000000") {
+                    makeAPIRequest(`/user/${"0x0000000000000000000000000000000000000000"}`, 'GET', null, null, null)
+                        .then(res => setPayee(res))
+                        .catch(err => {
+                            console.log("ERROR fetching payee", err);
+                            alert("ERROR fetching payee");
+                        })
+                }
 
             }).then(() => {
-                // fetch payee
-                makeAPIRequest(`payee/${params.address}`, 'GET', null, null, null)
-                    .then(res => {
-                        if (res.length !== 0){
-                            setPayee(res);
-                        }
-                    })
-                    .catch(err => {
-                        alert("ERROR fetching payee");
-                        console.log(err);
-                    })
-                
                 // TODO: fetch payable 
                 makeAPIRequest(`contract/payable/${params.address}}`, 'GET', null, null, null) 
                     .then(res => setPayable(res.status))
@@ -111,8 +122,7 @@ const ContractEdit = () => {
                 alert("Error fetching contract detail")
             })
     }, []);
-
-    console.log("conditions: ", conditions)
+    console.log('payee', payee);
     console.log("contract: ", contract)
 return (
     <Container component="main" maxWidth="lg">
