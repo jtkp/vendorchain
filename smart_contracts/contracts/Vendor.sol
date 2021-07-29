@@ -62,7 +62,7 @@ contract Vendor {
     function init(address _client, uint _expiredOn, uint _startDate, uint _contractHash, uint _amount) public {
         admin = msg.sender;
         client = payable(_client);
-        expiryDate = _expiredOn;
+        expiryDate = calcDate(_expiredOn);
         startDate = 0;
         prevBillingDate = calcDate(_startDate);
         nextBillingDate = calcDate(_startDate + 30);
@@ -71,6 +71,7 @@ contract Vendor {
         initOperators();
     }
 
+    
     function initOperators() private {
         convert['>'] = 1;
         convert['=='] = 2;
@@ -145,17 +146,19 @@ contract Vendor {
     }
     
     function payVendor() private {
+        satisfied = true;
         payee.transfer(amount);
         setNewDates();
     }
     
     function refund() private {
+        satisfied = false;
         client.transfer(amount);
         setNewDates();
     }
 
     function setNewDates() private checkExpiry() {
-        satisfied = false;
+        //satisfied = false;
         prevBillingDate = nextBillingDate;
         nextBillingDate = nextBillingDate + 30 * blocksDaily;
     }
@@ -170,6 +173,13 @@ contract Vendor {
         count++;
     }
     
+    function receiveServiceDataBypass(int[] memory _cumulative) external atStage(Stages.Active) {
+        for (uint i = 0; i < conditionCount; i++) {
+            cumulative[i] += _cumulative[i];
+        }
+        count++;
+    }
+
     // Calculates if the contract terms have been satisfied after next billing date has been passed.
     function isSatisfied() public atStage(Stages.Active) {
         for (uint i = 0; i < conditionCount; i++) {

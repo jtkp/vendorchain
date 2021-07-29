@@ -39,7 +39,7 @@ app.put('/contracts/:address/approve', db.approveContract); // DONE
 app.post('/contracts/:address/pay', db.storePayment); // DONE
 app.put('/contracts/:address/checkSatisfy', db.checkSatisfy); 
 app.post('/contracts/:address/sendData',db.sendData);
-
+app.post('/contracts/:address/sendDataBypass', db.sendDataBypass);
 /* ================================ Oracle ================================*/
 app.post('/oracle', oracle.verify);
 

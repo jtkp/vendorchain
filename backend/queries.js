@@ -352,6 +352,24 @@ const sendData = async (request, response) => {
   }
 }
 
+const sendDataBypass = async (request, response) => {
+  try{
+    const contractAddress = request.params.address;
+    const { values }= request.body; // values: int[8]
+    // TODO: Padding
+    // TODO: Verify source
+    const accounts = await eth.accounts();
+    const managerAccount = accounts[0];
+    const Vendor = await eth.Vendor(contractAddress);
+    const res = await Vendor.methods.receiveServiceDataBypass(values).send({from:managerAccount, gasPrice: 1000, gas: 1000000});
+    console.log("Sent data");
+    console.log(res);
+    response.status(200).json({msg: `Sent data to ${contractAddress}`});
+  }catch(err){
+    response.status(400).json(err);
+  }
+}
+
 module.exports = {
   // users
   getAdmin,
@@ -369,5 +387,6 @@ module.exports = {
   approveContract,
   storePayment,
   checkSatisfy,
-  sendData
+  sendData,
+  sendDataBypass
 }
