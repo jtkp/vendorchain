@@ -63,7 +63,7 @@ contract Vendor {
         admin = msg.sender;
         client = payable(_client);
         expiryDate = _expiredOn;
-        startDate = _startDate;
+        startDate = 0;
         prevBillingDate = calcDate(_startDate);
         nextBillingDate = calcDate(_startDate + 30);
         contractHash = _contractHash;
@@ -164,14 +164,14 @@ contract Vendor {
     // Sums up data received and counts how much of each.
     // Assumes data for each condition are received at the same time.
     function receiveServiceData(int[] memory _cumulative) external atStage(Stages.Active) checkBillingDate() {
-        for (uint i = 0; i < _cumulative.length; i++) {
+        for (uint i = 0; i < conditionCount; i++) {
             cumulative[i] += _cumulative[i];
         }
         count++;
     }
     
     // Calculates if the contract terms have been satisfied after next billing date has been passed.
-    function isSatisfied() private atStage(Stages.Active) {
+    function isSatisfied() public atStage(Stages.Active) {
         for (uint i = 0; i < conditionCount; i++) {
             int operator = operators[i];
             int value = values[i];
@@ -247,10 +247,10 @@ contract Vendor {
 
     // Cannot be expired.
     modifier checkExpiry() {
-        if (block.number < expiryDate) {
-            _;
+        if (block.number >= expiryDate) {
+            stage = Stages.Expired;  
         }
-        stage = Stages.Expired;
+        _;        
     }
 
     // Has to be in the correct state.

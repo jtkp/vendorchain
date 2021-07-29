@@ -101,16 +101,45 @@ const createUser = (request, response) => {
 /* ================================ Contracts ================================*/
 
 // get contract by a specific contract id - call functions - justin
-const getContractByAddress = (request, response) => {
-  // get parameters from url
-  const contractAddress = request.params.address;
+const getContractByAddress = async (request, response) => {
+  try{
+    const contractAddress = request.params.address;
 
-  Vendor(contractAddress)
-    .methods
-    .getDetails()
-    .send()
-    .then(res => response.status(200).json(res))
-    .catch(err => response.status(400).send("ERROR getting contract"));
+    const accounts = await eth.accounts();
+    const managerAccount = accounts[0];
+    console.log("Fetched manager account");
+    const Vendor = await eth.Vendor(contractAddress)
+    const res = await Vendor.methods.getDetails().call({"from": managerAccount});
+    //const newVendorContractAddress = res.events.ClonedContract.returnValues._cloned;
+    
+    // TODO: Retrieve conditions from DB
+
+    console.log(res);
+    const client = res['0']
+    const payee = res['1']
+    const startDate = res['2']
+    const expiryDate = res['3']
+    const amount = res['4'];
+    const prevBillingDate = res['5']
+    const nextBillingDate = res['6']
+    const contractHash = res['7']
+    // (client, payee, startDate, expiryDate, amount, prevBillingDate, nextBillingDate, contractHash);
+    response.status(200).send(
+      { client
+      , payee
+      , startDate
+      , expiryDate
+      , amount
+      , prevBillingDate
+      , nextBillingDate
+      , contractHash
+    });
+  }catch(err){
+    console.log("error");
+    console.log(err);
+    response.status(400).send({"error": err});
+  }
+
 }
 
 // get all contracts created by a specific user - katrina
@@ -229,9 +258,9 @@ const createContract = async (request, response) => {
       const operators = [];
 
       for (var i = 0;  i < 8; i++) {
-        names[i] = '';
+        names[i] = '0';
         values[i] = 0;
-        operators[i] = '';
+        operators[i] = '0';
       }
 
       for (var i = 0; i < conditions.length; i++) {
@@ -249,52 +278,6 @@ const createContract = async (request, response) => {
     console.log(err);
     response.status(400).json(err);
   }
-  
-
-  
-  //     const VendorFactory = await eth.VendorFactory();
-  //     const address = await VendorFactory.methods.createContract(client, expiryDate, startDate, hash, amount, index).send();
-  
-  //     pool.query("UPDATE contract SET address = $1 WHERE index = $2 returning *",
-  //     [address, index], 
-  //     (error, results) => {
-  //       if (error) {
-  //         console.log("ERROR creating contract", err)
-  //         response.status(400).json(error);
-
-  //       } else {
-  //         // names // string[8]
-  //         // , values // int[8]
-  //         // , operators // string[8]
-    
-  //         const names = [];
-  //         const values = [];
-  //         const operators = [];
-    
-  //         for (var i = 0; i < 8; i++) {
-  //           names[i] = '';
-  //           values[i] = 0;
-  //           operators[i] = '';
-  //         }
-    
-  //         for (var i = 0; i < conditions.length; i++) {
-  //           names[i] = conditions[i]['category'];
-  //           values[i] = conditions[i]['value'];
-  //           operators[i] = conditions[i]['operator'];
-  //         }
-    
-  //         const Vendor = await eth.Vendor(address);
-  //         const res = await Vendor.methods.setConds(names, values, operators).send();
-    
-  //         response.status(200).json(results.rows[0]);
-  //       }
-  //     })
-      
-  //   }
-     
-
-  // })
-
 }
 // update contracts with contract id  - call functions - justin
 const updateContract = (request, response) => {
@@ -315,23 +298,59 @@ const updateContract = (request, response) => {
 }
 
 // store payment in the contract
-const storePayment = (request, response) => {
-  const contractAddress = request.params.address;
-  const {client} = request.body;
+// Send payment
+const storePayment = async (request, response) => {
+  try{
+    const contractAddress = request.params.address;
+    const {client} = request.body;
+  
+    const Vendor = await eth.Vendor(contractAddress);
+    const amount = await Vendor.methods.amount().call({from: client});
+    console.log(amount);
 
-  // Use UPDATE keyword
-  pool.query('UPDATE contract SET title = $1, description = $2, address = $3 WHERE "contractID" = $4 returning * ', 
-              [newTitle, newDescription, newAddress, contractId],
-              (error, results) => {
-    if (error) {
-      response.status(400).json(error);
-    } else {
-      response.status(200).json(results.rows);
-    }
-  })
-
+    res = await Vendor.methods.storePayment().send({"from": client, value: amount,gasPrice: 1000, gas: 1000000});
+    
+    response.status(200).json({msg: `Sent ${amount} to ${client}`});
+  }catch(err){
+    response.status(400).json(err);
+  }
 }
 
+const checkSatisfy = async (request,response) => {
+  try{
+    const contractAddress = request.params.address;
+    const { client }= request.body;
+    const Vendor = await eth.Vendor(contractAddress);
+    let satisfied = await Vendor.methods.satisfied().call({from:client});
+    console.log(`Is satisfied before ${satisfied}`);
+    const res = await Vendor.methods.isSatisfied().send({"from": client, gasPrice: 1000, gas: 1000000});
+    satisfied = await Vendor.methods.satisfied().call({from:client});
+    console.log(`Is satisfied after ${satisfied}`);
+    console.log(res);
+    response.status(200).json({msg: `satisfy is ${res}`});
+  
+  }catch(err){
+    response.status(400).json(err);
+  }
+}
+
+const sendData = async (request, response) => {
+  try{
+    const contractAddress = request.params.address;
+    const { values }= request.body; // values: int[8]
+    // TODO: Padding
+    // TODO: Verify source
+    const accounts = await eth.accounts();
+    const managerAccount = accounts[0];
+    const Vendor = await eth.Vendor(contractAddress);
+    const res = await Vendor.methods.receiveServiceData(values).send({from:managerAccount, gasPrice: 1000, gas: 1000000});
+    console.log("Sent data");
+    console.log(res);
+    response.status(200).json({msg: `Sent data to ${contractAddress}`});
+  }catch(err){
+    response.status(400).json(err);
+  }
+}
 
 module.exports = {
   // users
@@ -348,5 +367,7 @@ module.exports = {
   createContract,
   updateContract,
   approveContract,
-  storePayment
+  storePayment,
+  checkSatisfy,
+  sendData
 }

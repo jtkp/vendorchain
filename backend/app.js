@@ -32,13 +32,13 @@ app.post('/user', db.createUser);
 app.get('/contract/:address', db.getContractByAddress);
 app.get('/contracts/:userAddress', db.getContractsByUserAddress);
 app.get('/contracts/payee/:address', db.getContractsByPayeeAddress);
-app.post('/contract/payee', db.inviteParty);
-app.post('/contract', db.createContract);
-app.put('/contract/:index', db.updateContract);
-app.put('/contracts/:address/approve', db.approveContract);
-app.post('/contracts/:address/pay', db.storePayment);
-
-
+app.post('/contract/payee', db.inviteParty); // DONE
+app.post('/contract', db.createContract); // DONE
+app.put('/contract/:index', db.updateContract); // TODO
+app.put('/contracts/:address/approve', db.approveContract); // DONE
+app.post('/contracts/:address/pay', db.storePayment); // DONE
+app.put('/contracts/:address/checkSatisfy', db.checkSatisfy); 
+app.post('/contracts/:address/sendData',db.sendData);
 
 /* ================================ Oracle ================================*/
 app.post('/oracle', oracle.verify);
