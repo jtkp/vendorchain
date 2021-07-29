@@ -8,6 +8,7 @@ contract Vendor {
     address payable public client;
     address payable public payee;
     bool public payeeApproved;
+    bool public paid;
 
     uint public startDate;
     uint public expiryDate;
@@ -63,7 +64,7 @@ contract Vendor {
         admin = msg.sender;
         client = payable(_client);
         expiryDate = calcDate(_expiredOn);
-        startDate = 0;
+        startDate = _startDate;
         prevBillingDate = calcDate(_startDate);
         nextBillingDate = calcDate(_startDate + 30);
         contractHash = _contractHash;
@@ -139,6 +140,7 @@ contract Vendor {
         if (msg.value != amount) {
             revert();
         }
+        paid = true;
     }
 
     function balanceOf() external view returns (uint) {
@@ -158,13 +160,13 @@ contract Vendor {
     }
 
     function setNewDates() private checkExpiry() {
-        //satisfied = false;
-        prevBillingDate = nextBillingDate;
-        nextBillingDate = nextBillingDate + 30 * blocksDaily;
         for(uint i = 0; i<conditionCount; i++){
             cumulative[i] = 0;
         }
         count = 0;
+        paid = false;
+        prevBillingDate = nextBillingDate;
+        nextBillingDate = nextBillingDate + 30 * blocksDaily;
     }
 
     // Allows off-chain to push data onto the blockchain.
@@ -209,22 +211,53 @@ contract Vendor {
     function condValid(int operator, int _toCheck, int value) private pure returns (bool) {
         if (operator != -1) {
             if (operator & 1 == 1) {
-                if (!(_toCheck > value)) {
+                if (!checkGreater(operator, _toCheck, value)) {
                     return false;
                 }
-            }
-            if (operator & 2 == 2) {
-                if (!(_toCheck == value)) {
+            } else if (operator & 4 == 4) {
+                if (!checkLess(operator, _toCheck, value)) {
                     return false;
                 }
-            }
-            if (operator & 4 == 4) {
-                if (!(_toCheck < value)) {
+            } else if (operator & 2 == 2) {
+                if (!checkEqual(operator, _toCheck, value)) {
                     return false;
                 }
             }
         }
         return true;
+    }
+    
+    function checkGreater(int operator, int _toCheck, int value) private pure returns (bool) {
+        bool status = false;
+        if (operator & 1 == 1) {
+            if (_toCheck > value) {
+                status = true;
+            }
+            if (checkEqual(operator, _toCheck, value)) {
+                status = true;
+            }
+        }
+        return status;
+    }
+    function checkLess(int operator, int _toCheck, int value) private pure returns (bool) {
+        bool status = false;
+        if (operator & 4 == 4) {
+            if (_toCheck < value) {
+                status = true;
+            }
+            if (checkEqual(operator, _toCheck, value)) {
+                status = true;
+            }
+        }
+        return status;
+    }
+    function checkEqual(int operator, int _toCheck, int value) private pure returns (bool) {
+        if (operator & 2 == 2) {
+            if (_toCheck == value) {
+                return true;
+            }
+        }
+        return false;
     }
 
     ////////////////////////////////////////////
