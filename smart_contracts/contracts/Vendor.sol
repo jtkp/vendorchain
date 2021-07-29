@@ -133,6 +133,17 @@ contract Vendor {
     ////////////////////////////////////////////
 
     function getDetails() external view returns (address, address, uint, uint, uint, uint, uint, uint, string[8] memory, int[8] memory, int[8] memory) {
+       emit Details( client, 
+                     payee, 
+                     startDate, 
+                     expiryDate, 
+                     amount, 
+                     prevBillingDate, 
+                     nextBillingDate, 
+                     contractHash, 
+                     names, 
+                     values, 
+                     operators);
         return (client, payee, startDate, expiryDate, amount, prevBillingDate, nextBillingDate, contractHash, names, values, operators);
     }
 
