@@ -32,6 +32,7 @@ contract Vendor {
     string[8] public names;
     int[8] public values;
     int[8] public operators;
+    string[8] public original;
     mapping (string => int) private convert;
     uint private conditionCount = 0;
     
@@ -53,7 +54,7 @@ contract Vendor {
                   uint contractHash, 
                   string[8] names, 
                   int[8] values, 
-                  int[8] operators);
+                  string[8] operators);
     event Log(string message, uint whatever);
 
     ////////////////////////////////////////////
@@ -63,7 +64,7 @@ contract Vendor {
     function init(address _client, uint _expiredOn, uint _startDate, uint _contractHash, uint _amount) public {
         admin = msg.sender;
         client = payable(_client);
-        expiryDate = calcDate(_expiredOn);
+        expiryDate = _expiredOn;
         startDate = _startDate;
         prevBillingDate = calcDate(_startDate);
         nextBillingDate = calcDate(_startDate + 30);
@@ -99,6 +100,7 @@ contract Vendor {
             names[i] = _names[i];
             values[i] = _values[i];
             operators[i] = convert[_operators[i]];
+            original[i] = _operators[i];
             conditionCount++;
         }
     }
@@ -132,19 +134,19 @@ contract Vendor {
     ////////// DEPLOYED FUNCTIONALITY //////////
     ////////////////////////////////////////////
 
-    function getDetails() external view returns (address, address, uint, uint, uint, uint, uint, uint, string[8] memory, int[8] memory, int[8] memory) {
-       emit Details( client, 
-                     payee, 
-                     startDate, 
-                     expiryDate, 
-                     amount, 
-                     prevBillingDate, 
-                     nextBillingDate, 
-                     contractHash, 
-                     names, 
-                     values, 
-                     operators);
-        return (client, payee, startDate, expiryDate, amount, prevBillingDate, nextBillingDate, contractHash, names, values, operators);
+    function getDetails() external view returns (address, address, uint, uint, uint, uint, uint, uint, string[8] memory, int[8] memory, string[8] memory) {
+    //    emit Details( client, 
+    //                  payee, 
+    //                  startDate, 
+    //                  expiryDate, 
+    //                  amount, 
+    //                  prevBillingDate, 
+    //                  nextBillingDate, 
+    //                  contractHash, 
+    //                  names, 
+    //                  values, 
+    //                  original);
+        return (client, payee, startDate, expiryDate, amount, prevBillingDate, nextBillingDate, contractHash, names, values, original);
     }
 
     function storePayment() external payable atStage(Stages.Active) checkBillingDate() {
@@ -305,7 +307,7 @@ contract Vendor {
 
     // Cannot be expired.
     modifier checkExpiry() {
-        if (block.number >= expiryDate) {
+        if (block.number >= calcDate(expiryDate)) {
             stage = Stages.Expired;  
         }
         _;        
