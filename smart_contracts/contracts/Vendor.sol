@@ -5,14 +5,14 @@ pragma solidity ^0.8.4;
 /// Contract that handles automated payment, considering if conditions are satisfied.
 contract Vendor {
     address public admin;
-    address payable public client;
-    address payable public payee;
+    address payable public client;      // owner address of the system
+    address payable public payee;       // vendor address
     bool public payeeApproved;
     bool public paid;
 
-    uint public startDate;
-    uint public expiryDate;
-    uint public amount;
+    uint public startDate;              // start date in DAYS from now
+    uint public expiryDate;             // expiry date in DAYS from now
+    uint public amount;                 // monthly pay rate
     uint public prevBillingDate;
     uint public nextBillingDate;
     uint public contractHash;
@@ -24,11 +24,11 @@ contract Vendor {
         Active,
         Expired
     }
-    Stages public stage = Stages.Initialising;
+    Stages public stage = Stages.Initialising;      // initial stage
 
     bool public satisfied = false;
     
-    // List of conditions
+    // List of conditions.
     string[8] public names;
     int[8] public values;
     int[8] public operators;
@@ -37,7 +37,7 @@ contract Vendor {
     uint private conditionCount = 0;
     
     // Block calculation.
-    uint constant blocksDaily = 6400;                       // Average blocks mined per day
+    uint constant blocksDaily = 6400;               // average blocks mined per day
 
     // Values that conditions will check to see if it is satisfied.
     mapping (uint => int) private cumulative;       // sums all values received during the contract, same length as conditionArray
@@ -55,7 +55,7 @@ contract Vendor {
                   string[8] names, 
                   int[8] values, 
                   string[8] operators);
-    event Log(string message, uint whatever);
+    event Log(string message, uint value);
 
     ////////////////////////////////////////////
     ////////////// INITIALISATION //////////////
@@ -73,7 +73,7 @@ contract Vendor {
         initOperators();
     }
 
-    
+    // Map operators to integers for checking via bit masking.
     function initOperators() private {
         convert['>'] = 1;
         convert['=='] = 2;
@@ -88,6 +88,7 @@ contract Vendor {
         return block.number + _billingDate*blocksDaily;
     }
     
+    // Set custom conditions with custom operators. Currently maxed at 8 conditions.
     function setConds(string[8] memory _names, int[8] memory _values, string[8] memory _operators) external atStage(Stages.Initialising) {
         emit Log("inside setConds, current stage is:", uint(stage));
         for (uint i = 0; i < 8; i++) {
@@ -109,7 +110,8 @@ contract Vendor {
         payee = payable(_payee);
     }
 
-    function endInitStage() public atStage(Stages.Initialising) {
+    // Automatically ends when payee approves the contracts.
+    function endInitStage() private atStage(Stages.Initialising) {
         emit Log("inside endInitStage, current stage is:", uint(stage));
         stage = Stages.Pending;
 
@@ -123,6 +125,7 @@ contract Vendor {
     ///////////////// PENDING //////////////////
     ////////////////////////////////////////////
 
+    // Only the invited payee can approve the contract.
     // Assumes client has already approved because the contract is deployed.
     function approve() external atStage(Stages.Pending) {
         require(msg.sender == admin, "Cannot call this function directly, use VendorFactory.");
@@ -135,17 +138,6 @@ contract Vendor {
     ////////////////////////////////////////////
 
     function getDetails() external view returns (address, address, uint, uint, uint, uint, uint, uint, string[8] memory, int[8] memory, string[8] memory) {
-    //    emit Details( client, 
-    //                  payee, 
-    //                  startDate, 
-    //                  expiryDate, 
-    //                  amount, 
-    //                  prevBillingDate, 
-    //                  nextBillingDate, 
-    //                  contractHash, 
-    //                  names, 
-    //                  values, 
-    //                  original);
         return (client, payee, startDate, expiryDate, amount, prevBillingDate, nextBillingDate, contractHash, names, values, original);
     }
 
@@ -172,6 +164,7 @@ contract Vendor {
         setNewDates();
     }
 
+    // Automatically moves the date range up by 30 days.
     function setNewDates() private checkExpiry() {
         for(uint i = 0; i<conditionCount; i++){
             cumulative[i] = 0;
@@ -192,6 +185,7 @@ contract Vendor {
         count++;
     }
     
+    // Bypasses checkBillingDate for demonstration purposes.
     function receiveServiceDataBypass(int[] memory _cumulative) external atStage(Stages.Active) {
         for (uint i = 0; i < conditionCount; i++) {
             cumulative[i] += _cumulative[i];
@@ -200,7 +194,8 @@ contract Vendor {
     }
 
     // Calculates if the contract terms have been satisfied after next billing date has been passed.
-    function isSatisfied() public atStage(Stages.Active) {
+    // Increases new billing date range by 30 days.
+    function isSatisfied() private atStage(Stages.Active) {
         for (uint i = 0; i < conditionCount; i++) {
             int operator = operators[i];
             int value = values[i];
@@ -212,7 +207,26 @@ contract Vendor {
                 return;
             }
         }
-        satisfied = true;
+        emit State(msg.sender, satisfied, "Sending payment.");
+        
+        // Automatically make payment.
+        payVendor();
+    }
+
+    // Normally automatically called after billing date has been passed.
+    // Manually called for demonstration purposes.
+    function isSatisfiedBypass() public atStage(Stages.Active) {
+        for (uint i = 0; i < conditionCount; i++) {
+            int operator = operators[i];
+            int value = values[i];
+            int _toCheck = cumulative[i]/count;
+            
+            if (!condValid(operator, _toCheck, value)) {
+                refund();
+                emit State(msg.sender, satisfied, "Refunding payment.");
+                return;
+            }
+        }
         emit State(msg.sender, satisfied, "Sending payment.");
         
         // Automatically make payment.
@@ -296,7 +310,7 @@ contract Vendor {
     // Only allow data to be pushed within the period.
     modifier checkBillingDate() {
         // Already checked if contract was active before this function,
-        // do not allow new data to be pushed if period is passed.
+        // do not allow new data to be pushed if outside period.
         if (block.number > nextBillingDate) {
             isSatisfied();
         } else {
@@ -315,8 +329,6 @@ contract Vendor {
 
     // Has to be in the correct state.
     modifier atStage(Stages _stage) {
-        emit Log("inside atStage, current stage is:", uint(stage));
-        emit Log("still inside atStage, trying to compare it to:", uint(_stage));
         require(uint(stage) == uint(_stage), "Contract is not in the required state");
         _;
     }

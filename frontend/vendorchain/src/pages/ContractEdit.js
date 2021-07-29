@@ -78,37 +78,47 @@ const ContractEdit = () => {
         //  fetch conditions blockchain
         makeAPIRequest(`contract/${params.address}`, 'GET', null, null, null) 
             .then(res => {
-                console.log(res)
+                console.log(res);
                 setContract(res);
-                setConditions(res.conditions);
-                // if (res.stages === 1) setBtnValue('Approve');
-                // else if (res.stages === 3) setBtnValue('Approved');
-                // else setBtnValue('No Action Required');
+                return res;
+            }).then(res => {
+                // set conditions
+                const cons = [];
+                res.names.map((n,idx) => {
+                    const tmp = {};
+                    tmp.name = n;
+                    tmp.operator = res.operators[idx];
+               
+                    tmp.value = +res.values[idx];
 
-            }).then(
-                // fetch payee
-                makeAPIRequest(`payee/${params.address}`, 'GET', null, null, null)
-                    .then(res => {
-                        if (res.length !== 0){
-                            setPayee(res);
-                        }
-                    })
-                    .catch(err => {
-                        alert("ERROR fetching payee");
-                        console.log(err);
-                    })
-                
+                    cons.push(tmp);
+                })
+                console.log('condition:', cons);
+                setConditions(cons);
+                if (res.payee !== "0x0000000000000000000000000000000000000000") {
+                    makeAPIRequest(`/user/${"0x0000000000000000000000000000000000000000"}`, 'GET', null, null, null)
+                        .then(res => setPayee(res))
+                        .catch(err => {
+                            console.log("ERROR fetching payee", err);
+                            alert("ERROR fetching payee");
+                        })
+                }
+
+            }).then(() => {
                 // TODO: fetch payable 
-                makeAPIRequest()
-                
-            )
+                makeAPIRequest(`contract/payable/${params.address}}`, 'GET', null, null, null) 
+                    .then(res => setPayable(res.status))
+                    .catch(err => {
+                        console.log(err);
+                        alert("ERROR getting payable status");
+                    })
+            })
             .catch(err => {
                 console.log(err);
                 alert("Error fetching contract detail")
             })
     }, []);
-
-    console.log("conditions: ", conditions)
+    console.log('payee', payee);
     console.log("contract: ", contract)
 return (
     <Container component="main" maxWidth="lg">
@@ -125,7 +135,7 @@ return (
                     <Typography variant='body2'>{contract.client}</Typography>
                     <hr />
                     <Typography variant='h6'>Contract Address</Typography>
-                    <Typography variant='body2'>{contract.address}</Typography>
+                    <Typography variant='body2'>{params.address}</Typography>
                     <hr />
                     <Typography variant='h6'>State</Typography>
                     <Typography variant='body2'>{contract.stages}</Typography>
@@ -149,7 +159,7 @@ return (
                     <Typography variant='body2'>{contract.description}</Typography>
                     <hr />
                     <Typography variant='h6'>Payee</Typography>
-                    <Typography varaint='body1'>{payee.name}</Typography>
+                    <Typography varaint='body1'>{payee === undefined ? '' : payee.name}</Typography>
                 </Grid>
                 <Grid item xs={12} md={6} lg={6}>
                     <Box
@@ -164,6 +174,9 @@ return (
 
                         {/* store payment btn */}
                         <Button variant='outlined' color='primary' size='large' disabled={!payable} onClick={handlePayment}>Send Payment</Button>
+                        
+                        {/* store payment btn */}
+                        {/* <Button variant='outlined' color='primary' size='large' disabled={!payable} onClick={handlePayment}>Send Payment</Button> */}
 
                         {/* approve btn */}
                         {/* <Button variant='outlined' color='primary' size='large' disabled={btnValue === ''}>{btnValue}</Button> */}

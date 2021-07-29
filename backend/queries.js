@@ -107,9 +107,9 @@ const getPayeeByContractAddress = (request, response) => {
   [contractAddress],
   (error, results) => {
     if (error) {
-      response(404).send("ERROR getting payee");
+      response.status(404).send("ERROR getting payee");
     } else {
-      response(200).json(results.rows);
+      response.status(200).json(results.rows);
     }
   })
 }
@@ -187,7 +187,7 @@ const getContractsByPayeeAddress = (request, response) => {
 // Get if the contract is payable
 const getContractPayable = (request, response) => {
   response.status(200).json({ status: true })
-  response.status(400).json(error);
+  response.status(400).json();
 }
 
 // Invite a payee with the address "partyAddress to the contract"
@@ -233,7 +233,7 @@ const createContract = async (request, response) => {
         , startDate
         , amount 
         } = request.body
-  
+  console.log(request.body)
   try{
 
     let results = await pool.query

@@ -4,17 +4,13 @@ import React from 'react';
 import Title from '../components/Titles/Title';
 import Subtitle from '../components/Titles/Subtitle';
 import CreateContractModal from '../components/Modals/CreateContractModal';
-import ImportModal from '../components/Modals/ImportModal';
 
 import {
   List,
-  ListItem,
-  ListItemSecondaryAction,
   ListItemText,
   IconButton,
 } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
-import DeleteIcon from '@material-ui/icons/Delete';
 import makeAPIRequest from '../Api';
 
 
@@ -51,6 +47,11 @@ const Dashboard = () => {
         makeAPIRequest(`contracts/${user.address}`, 'GET', null, null, null)
           .then (res => {
             console.log('my contracts', res)
+            res.expiryDate = +res.expiryDate;
+            res.nextBillingDate = +res.nextBillingDate;
+            res.prevBillingDate = +res.prevBillingDate;
+            res.startDate = +res.startDate;
+            console.log(res)
             setContracts(res);
           }).catch(err => {
             alert('Fetch contracts failed, please try again later');
