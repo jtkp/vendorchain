@@ -49,7 +49,7 @@ contract VendorFactory is CloneFactory {
         require(payable(msg.sender) == Vendor(_contract).payee(), "Only the payee can approve this contract.");
         Vendor(_contract).approve();
 
-        if (vendors[_index] != address(0x0)) {     // know if it's an update
+        if (updating[_index] != address(0x0)) {     // know if it's an update
             Vendor(vendors[_index]).destroy();
             delete(updating[_index]);
             vendors[_index] = _contract;
