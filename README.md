@@ -12,7 +12,7 @@ docker-compose up
 ```
 2. Compile and deploy contrats
 ```bash
-cd smart_contrats
+cd smart_contracts
 npm install
 node compile.js
 node deploy.js
