@@ -161,6 +161,10 @@ contract Vendor {
         //satisfied = false;
         prevBillingDate = nextBillingDate;
         nextBillingDate = nextBillingDate + 30 * blocksDaily;
+        for(uint i = 0; i<conditionCount; i++){
+            cumulative[i] = 0;
+        }
+        count = 0;
     }
 
     // Allows off-chain to push data onto the blockchain.
