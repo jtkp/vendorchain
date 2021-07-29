@@ -98,6 +98,21 @@ const createUser = (request, response) => {
   }
 }
 
+const getPayeeByContractAddress = (request, response) => {
+  // get parameters from url
+  const contractAddress = request.params.address;
+
+  pool.query('SELECT u.name as payee, u.email as payeeEmail, u.address as payeeAddress from party p JOIN userinfo u on u.address = p.payee WHERE p.address = $1',
+  [contractAddress],
+  (error, results) => {
+    if (error) {
+      response(404).send("ERROR getting payee");
+    } else {
+      response(200).json(results.rows);
+    }
+  })
+}
+
 /* ================================ Contracts ================================*/
 
 // get contract by a specific contract id - call functions - justin
@@ -166,6 +181,12 @@ const getContractsByPayeeAddress = (request, response) => {
       response.status(200).json(results.rows)
     }
   })
+}
+
+// get if the contract is payable
+const getContractPayable = (request, response) => {
+  response.status(200).json({ status: true })
+  response.status(400).json(error);
 }
 
 // invite parties to a contract  - call functions - justin
@@ -377,10 +398,12 @@ module.exports = {
   getUserByAddress,
   getUserByEmail,
   createUser,
+  getPayeeByContractAddress,
   // contracts
   getContractByAddress,
   getContractsByUserAddress,
   getContractsByPayeeAddress,
+  getContractPayable,
   inviteParty,
   createContract,
   updateContract,

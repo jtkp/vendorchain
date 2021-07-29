@@ -8,14 +8,12 @@ import {
 } from '@material-ui/core';
   
 import React from 'react';
-import { Formik } from 'formik';
 // import { makeStyles } from '@material-ui/core/styles';
 import styled from 'styled-components';
 import { Link, useParams, useHistory } from 'react-router-dom';
 import Title from '../components/Titles/Title';
 import Conditionsitem from '../components/ConditionsItem';
 import makeAPIRequest from '../Api';
-import InvitePartyModal from '../components/Modals/InvitePartyModal';
 
 const StyledLayout = styled.div`
     display: flex;
@@ -25,54 +23,31 @@ const StyledLayout = styled.div`
 `;
 
 
-const ContractEdit = () => {
+const ContractView = () => {
     const params = useParams();
     // const classes = useStyles();
-    const history = useHistory();
     const [conditions, setConditions] = React.useState([]);
     const [contract, setContract] = React.useState({});
-    const [payee, setPayee] = React.useState();
-    const [payable, setPayable] = React.useState();
+    const [payee, setPayee] = React.useState({});
+    const [btnValue, setBtnValue] = React.useState('');
 
-    // const [btnValue, setBtnValue] = React.useState('');
-
-    // const handleSubmit = (values, { setSubmitting }) => {
-    //     const body = JSON.stringify({
-            
-    //     })
-    //     // TODO: submit a new contract
-    // }
-
-    const handlePayment = (e) => {
+    const handleApprove = (e) => {
         const body = JSON.stringify({
-            client: contract.client
+            payeeAddress: payee.address,
+            index: contract.index,
         })
-        makeAPIRequest(`/contracts/${params.address}/pay`, 'POST', null, null, body)
+        
+        makeAPIRequest(`/contracts/${params.address}/approve`, 'PUT', null, null, body)
             .then(res => {
-                alert(res.msg);
-                setPayable(false);
-            }).catch(err => {
-                console.log(err);
-                alert("Error paying contract.");
+                alert("You have successfully approved " + contract.name);
+                window.location.reload();
             })
-    }
+            .catch(err => {
+                alert("ERROR approving contract");
+                console.log(err);
+            })
 
-    const conditionObj = {
-        categories: '',
-        operator: '',
-        input: 0,
     }
-    
-    const addCondition = () => {
-        setConditions([...conditions, conditionObj]);
-    }
-    const removeCondition = (e) => {
-        const newConditions = [...conditions];
-        //TODO:
-        // conditions.splice(conditions.indexOf(e.target), 1);
-        setConditions(newConditions);
-    }
-
 
     React.useEffect(() => {
         //  fetch conditions blockchain
@@ -80,26 +55,18 @@ const ContractEdit = () => {
             .then(res => {
                 console.log(res)
                 setContract(res);
-                setConditions(res.conditions);
-                // if (res.stages === 1) setBtnValue('Approve');
-                // else if (res.stages === 3) setBtnValue('Approved');
-                // else setBtnValue('No Action Required');
+                if (res.stages === 1) setBtnValue('Approve');
+                else if (res.stages === 3) setBtnValue('Approved');
+                else setBtnValue('No Action Required');
 
             }).then(
                 // fetch payee
                 makeAPIRequest(`payee/${params.address}`, 'GET', null, null, null)
-                    .then(res => {
-                        if (res.length !== 0){
-                            setPayee(res);
-                        }
-                    })
+                    .then(res => setPayee(res))
                     .catch(err => {
                         alert("ERROR fetching payee");
                         console.log(err);
                     })
-                
-                // TODO: fetch payable 
-                makeAPIRequest()
                 
             )
             .catch(err => {
@@ -159,35 +126,23 @@ return (
                         alignItems='flex-end'
                         height='100%'
                     >
-                        {/* invite party btn */}
-                        <InvitePartyModal fetchedPayee={payee} />
-
-                        {/* store payment btn */}
-                        <Button variant='outlined' color='primary' size='large' disabled={!payable} onClick={handlePayment}>Send Payment</Button>
-
-                        {/* approve btn */}
-                        {/* <Button variant='outlined' color='primary' size='large' disabled={btnValue === ''}>{btnValue}</Button> */}
+                        <Button variant='outlined' color='primary' size='large' disabled={btnValue !== 'Approve'} onClick={handleApprove}>{btnValue}</Button>
                     </Box>
                 </Grid>
                 <Grid item xs={12} md={12} lg={12}>
-                    
-                    <Button
-                        variant='outlined' 
-                        color='primary' 
-                        size='large' 
-                        style={{width:'100%'}}
-                        onClick={addCondition}
-                    >
-                        Add conditions
-                    </Button>
                     <Box
                         display='flex'
                         flexDirection='column'
                         width='100%'
                     >
+                        <ul>
                         {
-                            conditions.map((c, idx) => <Conditionsitem condition={c} idx={idx} key={idx} removeCondition={removeCondition} />)
+                            contract.conditions.map((c, idx) => (
+                                <li key={idx}>{c.category}, {c.operator}, {c.value}</li>
+                            ))
                         }
+
+                        </ul>
                     </Box>
 
 
@@ -199,4 +154,4 @@ return (
 }
 
 
-export default ContractEdit;
+export default ContractView;

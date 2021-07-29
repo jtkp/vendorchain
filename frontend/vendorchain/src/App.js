@@ -16,6 +16,7 @@ import {
   Switch,
   Route,
 } from 'react-router-dom';
+import ContractView from './pages/ContractView';
 
 
 function App() {
@@ -50,8 +51,9 @@ function App() {
                   <Route exact path={`${url}register`} component={Register}/>
                   <Route exact path={`${url}dashboard`} component={Dashboard} />
 
-                  {/* Contract edit TODO: use contract id here*/}
-                  <Route exact path={`${url}contract/edit/:id`} component={ContractEdit} />
+                  {/* Contract edit TODO: use contract index here*/}
+                  <Route exact path={`${url}contract/edit/:address`} component={ContractEdit} />
+                  <Route exact path={`${url}contract/view/:address`} component={ContractView} />
 
                   <Route exact path="*" component={NotFound} />
 

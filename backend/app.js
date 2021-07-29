@@ -27,11 +27,13 @@ app.get('/vendors', db.getVendors);
 app.get('/user/:address', db.getUserByAddress);
 app.get('/user/email/:email', db.getUserByEmail);
 app.post('/user', db.createUser);
+app.get('/payee/:contractAddress', db.getPayeeByContractAddress);
 
 /* ================================ Contracts ================================*/
 app.get('/contract/:address', db.getContractByAddress);
 app.get('/contracts/:userAddress', db.getContractsByUserAddress);
 app.get('/contracts/payee/:address', db.getContractsByPayeeAddress);
+app.get('/contract/payable/:address', db.getContractPayable);
 app.post('/contract/payee', db.inviteParty); // DONE
 app.post('/contract', db.createContract); // DONE
 app.put('/contract/:index', db.updateContract); // TODO

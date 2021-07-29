@@ -55,7 +55,8 @@ const CreateContractModal = ({ contracts, setContracts }) => {
       client: JSON.parse(localStorage.getItem('user')).address,
       expiryDate: new Date(expiryDate).getTime() / 1000,
       startDate: new Date(startDate).getTime() / 1000,
-      amount: amount
+      amount: amount,
+      conditions: []
     })
 
     makeAPIRequest('contract', 'POST', null, null, newC)
