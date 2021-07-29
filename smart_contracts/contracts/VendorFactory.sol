@@ -49,7 +49,7 @@ contract VendorFactory is CloneFactory {
         require(payable(msg.sender) == Vendor(_contract).payee(), "Only the payee can approve this contract.");
         Vendor(_contract).approve();
 
-        if (updating[_index] != address(0x0)) {     // know if it's an update
+        if (updating[_index] != address(0x0)) {     // if it's an update, perform relevant operations
             Vendor(vendors[_index]).destroy();
             delete(updating[_index]);
             vendors[_index] = _contract;
@@ -59,6 +59,7 @@ contract VendorFactory is CloneFactory {
         return (_contract, _index);
     }
 
+    // Only the company address can create new vendor contracts.
     modifier onlyAdmin() {
         require(msg.sender == admin, 'Only the admin can use this function');
         _;
