@@ -74,14 +74,23 @@ const InvitePartyModal = ({ fetchedPayee }) => {
 
   }
 
-  
+  if (fetchedPayee === undefined) {
+    return (
+      <Button 
+      variant="outlined"
+      color="primary"
+      disable
+      >
+      Create a new contract
+      </Button>
+    )
+  }
   return (
     <div>
       <Button
         onClick={handleClickOpen}
         variant="outlined"
         color="primary"
-        disable={payee === undefined}
       >
         Create a new contract
       </Button>

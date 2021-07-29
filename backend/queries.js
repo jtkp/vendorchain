@@ -245,7 +245,7 @@ const createContract = async (request, response) => {
         , startDate
         , amount 
         } = request.body
-  
+  console.log(request.body)
   try{
 
     let results = await pool.query

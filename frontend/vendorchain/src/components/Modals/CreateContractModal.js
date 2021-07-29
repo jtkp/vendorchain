@@ -56,7 +56,6 @@ const CreateContractModal = ({ contracts, setContracts }) => {
       expiryDate: new Date(expiryDate).getTime() / 1000,
       startDate: new Date(startDate).getTime() / 1000,
       amount: amount,
-      conditions: []
     })
 
     makeAPIRequest('contract', 'POST', null, null, newC)

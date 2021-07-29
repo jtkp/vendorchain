@@ -12,7 +12,6 @@ import React from 'react';
 import styled from 'styled-components';
 import { Link, useParams, useHistory } from 'react-router-dom';
 import Title from '../components/Titles/Title';
-import Conditionsitem from '../components/ConditionsItem';
 import makeAPIRequest from '../Api';
 
 const StyledLayout = styled.div`
@@ -26,7 +25,6 @@ const StyledLayout = styled.div`
 const ContractView = () => {
     const params = useParams();
     // const classes = useStyles();
-    const [conditions, setConditions] = React.useState([]);
     const [contract, setContract] = React.useState({});
     const [payee, setPayee] = React.useState({});
     const [btnValue, setBtnValue] = React.useState('');
@@ -75,7 +73,6 @@ const ContractView = () => {
             })
     }, []);
 
-    console.log("conditions: ", conditions)
     console.log("contract: ", contract)
 return (
     <Container component="main" maxWidth="lg">
