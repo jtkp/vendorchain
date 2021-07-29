@@ -110,7 +110,8 @@ contract Vendor {
         payee = payable(_payee);
     }
 
-    function endInitStage() public atStage(Stages.Initialising) {
+    // Automatically ends when payee approves the contracts.
+    function endInitStage() private atStage(Stages.Initialising) {
         emit Log("inside endInitStage, current stage is:", uint(stage));
         stage = Stages.Pending;
 
@@ -193,7 +194,8 @@ contract Vendor {
     }
 
     // Calculates if the contract terms have been satisfied after next billing date has been passed.
-    function isSatisfied() public atStage(Stages.Active) {
+    // Increases new billing date range by 30 days.
+    function isSatisfied() private atStage(Stages.Active) {
         for (uint i = 0; i < conditionCount; i++) {
             int operator = operators[i];
             int value = values[i];
@@ -205,7 +207,26 @@ contract Vendor {
                 return;
             }
         }
-        satisfied = true;
+        emit State(msg.sender, satisfied, "Sending payment.");
+        
+        // Automatically make payment.
+        payVendor();
+    }
+
+    // Normally automatically called after billing date has been passed.
+    // Manually called for demonstration purposes.
+    function isSatisfiedBypass() public atStage(Stages.Active) {
+        for (uint i = 0; i < conditionCount; i++) {
+            int operator = operators[i];
+            int value = values[i];
+            int _toCheck = cumulative[i]/count;
+            
+            if (!condValid(operator, _toCheck, value)) {
+                refund();
+                emit State(msg.sender, satisfied, "Refunding payment.");
+                return;
+            }
+        }
         emit State(msg.sender, satisfied, "Sending payment.");
         
         // Automatically make payment.
@@ -308,8 +329,6 @@ contract Vendor {
 
     // Has to be in the correct state.
     modifier atStage(Stages _stage) {
-        emit Log("inside atStage, current stage is:", uint(stage));
-        emit Log("still inside atStage, trying to compare it to:", uint(_stage));
         require(uint(stage) == uint(_stage), "Contract is not in the required state");
         _;
     }
