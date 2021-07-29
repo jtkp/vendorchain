@@ -1,0 +1,12 @@
+Deployed on Ropsten Test network on Remix.
+
+VendorFactory: 0x05ABe74c2a63e289AA7F80a7DbB94ec9A5Db7D7D
+VendorInstance: 0x01477a793B14cc932D2887F433D96447f52a728C
+
+Deployment instructions on Remix:
+
+- New VendorFactory can be deployed by first deploying Vendor.sol,
+- and passing in that address to the constructor of VendorFactory.
+
+- New contracts can be created with this example input.
+- createVendor = "your_ethereum_address","100","0","42","123","1".
