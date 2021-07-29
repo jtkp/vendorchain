@@ -408,7 +408,7 @@ const updateContract = async (request, response) => {
 const storePayment = async (request, response) => {
   try{
     const contractAddress = request.params.address;
-    const {client} = request.body;
+    const { client } = request.body;
     const Vendor = await eth.Vendor(contractAddress);
     const amount = await Vendor.methods.amount().call({from: client});
     res = await Vendor.methods.storePayment().send({"from": client, value: amount,gasPrice: 1000, gas: 1000000});
@@ -426,12 +426,18 @@ const checkSatisfy = async (request,response) => {
     const contractAddress = request.params.address;
     const { client }= request.body;
     const Vendor = await eth.Vendor(contractAddress);
-    let satisfied = await Vendor.methods.satisfied().call({from:client});
-    const res = await Vendor.methods.isSatisfied().send({"from": client, gasPrice: 1000, gas: 1000000});
-    satisfied = await Vendor.methods.satisfied().call({from:client});
-    response.status(200).json({msg: `satisfy is ${res}`});
+    console.log("Got vendor contract");
+    const res = await Vendor.methods.isSatisfiedBypass().send({"from": client, gasPrice: 1000, gas: 1000000});
+    console.log("Called is satisfy");
+    const satisfied = await Vendor.methods.satisfied().call({from:client});
+    console.log(`satisfied is ${satisfied}`);
+    console.log(satisfied)
+    const msg = satisfied ? 'Contract conditions are satisfied' : 'Contract conditions are not satisfied'
+    response.status(200).json({msg});
 
   }catch(err){
+    console.log("error")
+    console.log(err)
     response.status(400).json(err);
   }
 }
@@ -445,9 +451,7 @@ const sendData = async (request, response) => {
     const managerAccount = accounts[0];
     const Vendor = await eth.Vendor(contractAddress);
     const res = await Vendor.methods.receiveServiceData(values).send({from:managerAccount, gasPrice: 1000, gas: 1000000});
-    console.log("Sent data");
-    console.log(res);
-    response.status(200).json({msg: `Successfully sent data to ${contractAddress}`});
+    response.status(200).json({msg: `Successfully sent ${values} to ${contractAddress}`});
   }catch(err){
     response.status(400).json(err);
   }
@@ -464,7 +468,7 @@ const sendDataBypass = async (request, response) => {
     const res = await Vendor.methods.receiveServiceDataBypass(values).send({from:managerAccount, gasPrice: 1000, gas: 1000000});
     console.log("Sent data");
     console.log(res);
-    response.status(200).json({msg: `Successfully sent data to ${contractAddress}`});
+    response.status(200).json({msg: `Successfully sent ${values} to ${contractAddress}`});
   }catch(err){
     response.status(400).json(err);
   }
