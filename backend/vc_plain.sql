@@ -228,7 +228,7 @@ ALTER TABLE ONLY public.userinfo
 --
 
 ALTER TABLE ONLY public.condition
-    ADD CONSTRAINT condition_address_fkey FOREIGN KEY (address) REFERENCES public.contract(address);
+    ADD CONSTRAINT condition_address_fkey FOREIGN KEY (address) REFERENCES public.contract(address) ON DELETE CASCADE;
 
 
 --

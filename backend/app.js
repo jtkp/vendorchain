@@ -36,10 +36,11 @@ app.get('/contracts/payee/:address', db.getContractsByPayeeAddress);
 app.get('/contract/payable/:address', db.getContractPayable);
 app.post('/contract/payee', db.inviteParty); // DONE
 app.post('/contract', db.createContract); // DONE
-app.put('/contract/:index', db.updateContract); // TODO
+app.put('/contract/:index/update', db.updateContract); // TODO
 app.put('/contracts/:address/approve', db.approveContract); // DONE
 app.post('/contracts/:address/pay', db.storePayment); // DONE
-app.put('/contracts/:address/checkSatisfy', db.checkSatisfy); 
+app.put('/contracts/:address/checkSatisfy', db.checkSatisfy);
+app.put('/contracts/:index', db.sendConditions); 
 app.post('/contracts/:address/sendData',db.sendData);
 app.post('/contracts/:address/sendDataBypass', db.sendDataBypass);
 /* ================================ Oracle ================================*/

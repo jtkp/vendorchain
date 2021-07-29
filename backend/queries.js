@@ -244,7 +244,6 @@ const createContract = async (request, response) => {
         , expiryDate
         , startDate
         , amount 
-        , conditions
         } = request.body
   
   try{
@@ -274,24 +273,6 @@ const createContract = async (request, response) => {
       const newVendorContractAddress = res.events.ClonedContract.returnValues._cloned;
       results = await pool.query("UPDATE contract SET address = $1 WHERE index = $2",[newVendorContractAddress, index])
       
-      const names = [];
-      const values = [];
-      const operators = [];
-
-      for (var i = 0;  i < 8; i++) {
-        names[i] = '0';
-        values[i] = 0;
-        operators[i] = '0';
-      }
-
-      for (var i = 0; i < conditions.length; i++) {
-        names[i] = conditions[i]['category'];
-        values[i] = conditions[i]['value'];
-        operators[i] = conditions[i]['operator'];
-      }
-
-      const Vendor = await eth.Vendor(newVendorContractAddress);
-      res = await Vendor.methods.setConds(names, values, operators).send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
       response.status(200).json({ status: "success" });
 
   } catch(err){
@@ -300,21 +281,138 @@ const createContract = async (request, response) => {
     response.status(400).json(err);
   }
 }
-// update contracts with contract id  - call functions - justin
-const updateContract = (request, response) => {
-  const contractId = request.params.id;
-  const { newTitle, newDescription, newAddress } = request.body;
 
-  // Use UPDATE keyword
-  pool.query('UPDATE contract SET title = $1, description = $2, address = $3 WHERE "contractID" = $4 returning * ', 
-              [newTitle, newDescription, newAddress, contractId],
-              (error, results) => {
-    if (error) {
-      response.status(400).json(error);
-    } else {
-      response.status(200).json(results.rows);
+const sendConditions = async (request,response) => {
+  try{
+    const index = request.params.index;
+    const {conditions} = request.body;
+    
+    let results = await pool.query
+    ( " SELECT address FROM contract WHERE index = $1"
+    , [index]
+    );
+    console.log(results.rows[0].address);
+    const contractAddress = results.rows[0].address;
+    
+    const names = [];
+    const values = [];
+    const operators = [];
+
+    for (var i = 0;  i < 8; i++) {
+      names[i] = '0';
+      values[i] = 0;
+      operators[i] = '0';
     }
-  })
+
+    for (var i = 0; i < conditions.length; i++) {
+      names[i] = conditions[i]['category'];
+      values[i] = conditions[i]['value'];
+      operators[i] = conditions[i]['operator'];
+    }
+    console.log("Conditions to arrays")
+    const Vendor = await eth.Vendor(contractAddress);
+    console.log("Fetched vendor");
+    const accounts = await eth.accounts();
+    const managerAccount = accounts[0];
+    const res = await Vendor.methods.setConds(names, values, operators).send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
+    console.log("Set conditions")
+    for (var i = 0; i < conditions.length; i++) {
+      await pool.query
+      ( "INSERT INTO condition (address, name, operator, value) VALUES ($1,$2,$3,$4)" 
+      , [contractAddress, names[i], operators[i], values[i]]
+      )
+    }
+
+    response.status(200).json({ msg: `Successfully set conditions to  ${contractAddress}` });
+  }catch(err){
+    console.log("error");
+    response.status(400).json({ msg: `Failed to set conditions`});
+  }
+}
+
+// update contracts with contract id  - call functions - justin
+const updateContract = async (request, response) => {
+
+const index = request.params.index;
+
+const { title
+  , description 
+  , client
+  , expiryDate
+  , startDate
+  , amount 
+  , conditions
+  } = request.body
+
+try{
+    
+    const hash = 100;
+    const VendorFactory = await eth.VendorFactory();
+
+    const accounts = await eth.accounts();
+    const managerAccount = accounts[0];
+
+    let results = await pool.query
+    ( " SELECT address FROM contract WHERE index = $1"
+    , [index]
+    );
+    
+    const originalAddress = results.rows[0].address
+    console.log(`Original address is ${originalAddress}`);
+
+    let res = await VendorFactory.methods.createVendor(client, expiryDate, startDate, hash, amount, index)
+    .send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
+
+    const newVendorContractAddress = res.events.ClonedContract.returnValues._cloned;
+    console.log("Created new updated contract");
+    const names = [];
+    const values = [];
+    const operators = [];
+
+    for (var i = 0;  i < 8; i++) {
+      names[i] = '0';
+      values[i] = 0;
+      operators[i] = '0';
+    }
+
+    for (var i = 0; i < conditions.length; i++) {
+      names[i] = conditions[i]['category'];
+      values[i] = conditions[i]['value'];
+      operators[i] = conditions[i]['operator'];
+    }
+
+    const Vendor = await eth.Vendor(newVendorContractAddress);
+    res = await Vendor.methods.setConds(names, values, operators).send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
+    console.log("Set conditions of updated contract");
+    results = await pool.query
+    ( "DELETE FROM condition WHERE address = $1"
+    , [originalAddress]
+    );
+    console.log("Deleted conditions");
+    
+    //results = await pool.query("UPDATE contract SET address = $1 WHERE index = $2",[newVendorContractAddress, index])
+
+    results = await pool.query
+    ( "UPDATE contract SET title=$1, description=$2,address=$3 WHERE index = $4"
+    , [title, description, newVendorContractAddress,index]
+    );
+
+    console.log("Updated contract address");
+
+    for (var i = 0; i < conditions.length; i++) {
+      await pool.query
+      ( "INSERT INTO condition (address, name, operator, value) VALUES ($1,$2,$3,$4)" 
+      , [newVendorContractAddress, names[i], operators[i], values[i]]
+      )
+    }
+ 
+    response.status(200).json({ status: `success updated contract. New address is ${newVendorContractAddress}` });
+
+} catch(err){
+  console.log("error");
+  console.log(err);
+  response.status(400).json(err);
+}
 
 }
 
@@ -406,6 +504,7 @@ module.exports = {
   getContractPayable,
   inviteParty,
   createContract,
+  sendConditions,
   updateContract,
   approveContract,
   storePayment,
