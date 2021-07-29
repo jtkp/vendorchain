@@ -138,6 +138,9 @@ const getContractByAddress = async (request, response) => {
     const prevBillingDate = res['5']
     const nextBillingDate = res['6']
     const contractHash = res['7']
+    const names = res['8']
+    const values = res['9']
+    const operators = res['10']
     // (client, payee, startDate, expiryDate, amount, prevBillingDate, nextBillingDate, contractHash);
     response.status(200).send(
       { client
@@ -148,6 +151,9 @@ const getContractByAddress = async (request, response) => {
       , prevBillingDate
       , nextBillingDate
       , contractHash
+      , names
+      , values
+      , operators
     });
   }catch(err){
     console.log("error");
