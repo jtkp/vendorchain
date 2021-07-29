@@ -52,7 +52,7 @@ const InvitePartyModal = ({ fetchedPayee }) => {
   };
 
   const handleChange = (e) => {
-    setPayee(e.target.value);
+    setValue(e.target.value);
   }
 
   // Handler for submitting the name to the new game
@@ -74,7 +74,7 @@ const InvitePartyModal = ({ fetchedPayee }) => {
 
   }
 
-  console.log(fetchedPayee);
+  console.log(payee);
 
   if (fetchedPayee !== undefined) {
     return (
@@ -112,7 +112,7 @@ const InvitePartyModal = ({ fetchedPayee }) => {
             <FormLabel component="legend">Name</FormLabel>
             <RadioGroup aria-label="gender" name="gender1" value={value} onChange={handleChange}>
               {
-                vendors.map((v, idx) => <FormControlLabel key={idx} value={v} control={<Radio />} label={v.name} />)
+                vendors.map((v, idx) => <FormControlLabel key={idx} value={v.name} control={<Radio />} label={v.name} />)
               }
             </RadioGroup>
           </FormControl>

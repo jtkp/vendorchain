@@ -180,7 +180,7 @@ return (
                         <Button variant='outlined' color='primary' size='large' disabled={!payable} onClick={handlePayment}>Send Payment</Button>
                         
                         {/* store payment btn */}
-                        <Button variant='outlined' color='primary' size='large' disabled={!payable} onClick={handlePayment}>Send Payment</Button>
+                        {/* <Button variant='outlined' color='primary' size='large' disabled={!payable} onClick={handlePayment}>Send Payment</Button> */}
 
                         {/* approve btn */}
                         {/* <Button variant='outlined' color='primary' size='large' disabled={btnValue === ''}>{btnValue}</Button> */}
