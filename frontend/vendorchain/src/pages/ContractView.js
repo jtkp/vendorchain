@@ -32,7 +32,20 @@ const ContractView = () => {
     const [btnValue, setBtnValue] = React.useState('');
 
     const handleApprove = (e) => {
+        const body = {
+            payeeAddress: payee.address,
+            index: contract.index,
+        }
         
+        makeAPIRequest(`/contracts/${params.address}/approve`, 'PUT', null, null, body)
+            .then(res => {
+                alert("You have successfully approved " + contract.name);
+                window.location.reload();
+            })
+            .catch(err => {
+                alert("ERROR approving contract");
+                console.log(err);
+            })
 
     }
 
