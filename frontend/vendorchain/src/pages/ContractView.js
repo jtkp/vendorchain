@@ -49,13 +49,6 @@ const ContractView = () => {
 
     }
 
-    const removeCondition = (e) => {
-        const newConditions = [...conditions];
-        //TODO:
-        // conditions.splice(conditions.indexOf(e.target), 1);
-        setConditions(newConditions);
-    }
-
     React.useEffect(() => {
         //  fetch conditions blockchain
         makeAPIRequest(`contract/${params.address}`, 'GET', null, null, null) 

@@ -33,7 +33,7 @@ app.get('/payee/:contractAddress', db.getPayeeByContractAddress);
 app.get('/contract/:address', db.getContractByAddress);
 app.get('/contracts/:userAddress', db.getContractsByUserAddress);
 app.get('/contracts/payee/:address', db.getContractsByPayeeAddress);
-app.get('/contract/payable', db.getContractPayable);
+app.get('/contract/payable/:address', db.getContractPayable);
 app.post('/contract/payee', db.inviteParty); // DONE
 app.post('/contract', db.createContract); // DONE
 app.put('/contract/:index', db.updateContract); // TODO
