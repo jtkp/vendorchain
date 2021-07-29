@@ -23,7 +23,7 @@ const InvitePartyModal = ({ fetchedPayee }) => {
   const [open, setOpen] = React.useState(false);
   const [payee, setPayee] = React.useState(fetchedPayee);
   const [vendors, setVendors] = React.useState([]);
-
+  const [value, setValue] = React.useState('');
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -52,7 +52,7 @@ const InvitePartyModal = ({ fetchedPayee }) => {
   };
 
   const handleChange = (e) => {
-    setPayee(e.target.value);
+    setValue(e.target.value);
   }
 
   // Handler for submitting the name to the new game
@@ -74,16 +74,27 @@ const InvitePartyModal = ({ fetchedPayee }) => {
 
   }
 
-  
+  console.log(payee);
+
+  if (fetchedPayee !== undefined) {
+    return (
+      <Button 
+      variant="outlined"
+      color="primary"
+      disabled
+      >
+      Invite Party
+      </Button>
+    )
+  }
   return (
     <div>
       <Button
         onClick={handleClickOpen}
         variant="outlined"
         color="primary"
-        disable={payee === undefined}
       >
-        Create a new contract
+        Invite party
       </Button>
         {/* XXX: accessibility: labelledby: https://material-ui.com/zh/components/modal/ */}
       <Dialog
@@ -92,16 +103,16 @@ const InvitePartyModal = ({ fetchedPayee }) => {
         fullScreen={fullScreen}
         aria-labelledby="create-new-contract-title"
       >
-        <DialogTitle id="create-new-contract-title">Create a new contract</DialogTitle>
+        <DialogTitle id="create-new-contract-title">Invite Party</DialogTitle>
         <DialogContent>
           <DialogContentText>
             To invite a party, please select a user
           </DialogContentText>
           <FormControl component="fieldset">
-            <FormLabel component="legend">Gender</FormLabel>
-            <RadioGroup aria-label="gender" name="gender1" value={payee.name} onChange={handleChange}>
+            <FormLabel component="legend">Name</FormLabel>
+            <RadioGroup aria-label="gender" name="gender1" value={value} onChange={handleChange}>
               {
-                vendors.map((v, idx) => <FormControlLabel key={idx} value={v} control={<Radio />} label={v.name} />)
+                vendors.map((v, idx) => <FormControlLabel key={idx} value={v.name} control={<Radio />} label={v.name} />)
               }
             </RadioGroup>
           </FormControl>
@@ -110,7 +121,7 @@ const InvitePartyModal = ({ fetchedPayee }) => {
           <Button onClick={handleClose} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleSubmit} color="primary" disable={payee === undefined}>
+          <Button onClick={handleSubmit} color="primary" disabled={payee === undefined}>
             Confirm
           </Button>
         </DialogActions>
