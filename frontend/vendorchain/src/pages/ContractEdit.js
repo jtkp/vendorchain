@@ -15,6 +15,7 @@ import { Link, useParams, useHistory } from 'react-router-dom';
 import Title from '../components/Titles/Title';
 import Conditionsitem from '../components/ConditionsItem';
 import makeAPIRequest from '../Api';
+import InvitePartyModal from '../components/Modals/InvitePartyModal';
 
 const StyledLayout = styled.div`
     display: flex;
@@ -30,8 +31,10 @@ const ContractEdit = () => {
     const history = useHistory();
     const [conditions, setConditions] = React.useState([]);
     const [contract, setContract] = React.useState({});
-    const [payee, setPayee] = React.useState({});
-    const [btnValue, setBtnValue] = React.useState('');
+    const [payee, setPayee] = React.useState();
+    const [payable, setPayable] = React.useState();
+
+    // const [btnValue, setBtnValue] = React.useState('');
 
     // const handleSubmit = (values, { setSubmitting }) => {
     //     const body = JSON.stringify({
@@ -39,6 +42,20 @@ const ContractEdit = () => {
     //     })
     //     // TODO: submit a new contract
     // }
+
+    const handlePayment = (e) => {
+        const body = JSON.stringify({
+            client: contract.client
+        })
+        makeAPIRequest(`/contracts/${params.address}/pay`, 'POST', null, null, body)
+            .then(res => {
+                alert(res.msg);
+                setPayable(false);
+            }).catch(err => {
+                console.log(err);
+                alert("Error paying contract.");
+            })
+    }
 
     const conditionObj = {
         categories: '',
@@ -56,9 +73,6 @@ const ContractEdit = () => {
         setConditions(newConditions);
     }
 
-    const handleInvite = (e) => {
-
-    }
 
     React.useEffect(() => {
         //  fetch conditions blockchain
@@ -66,27 +80,26 @@ const ContractEdit = () => {
             .then(res => {
                 console.log(res)
                 setContract(res);
-                if (res.stages === 1) setBtnValue('Approve');
-                else if (res.stages === 3) setBtnValue('Approved');
-                else setBtnValue('No Action Required');
+                setConditions(res.conditions);
+                // if (res.stages === 1) setBtnValue('Approve');
+                // else if (res.stages === 3) setBtnValue('Approved');
+                // else setBtnValue('No Action Required');
 
             }).then(
-                // fetch conditions
-
-                // makeAPIRequest(`conditions/${params.address}`, 'GET', null, null, null)
-                // .then(res => setConditions(res))
-                // .catch(err => {
-                //     console.log(err);
-                //     alert("Error fetching conditions");
-                // })
-
                 // fetch payee
                 makeAPIRequest(`payee/${params.address}`, 'GET', null, null, null)
-                    .then(res => setPayee(res))
+                    .then(res => {
+                        if (res.length !== 0){
+                            setPayee(res);
+                        }
+                    })
                     .catch(err => {
                         alert("ERROR fetching payee");
                         console.log(err);
                     })
+                
+                // TODO: fetch payable 
+                makeAPIRequest()
                 
             )
             .catch(err => {
@@ -146,8 +159,14 @@ return (
                         alignItems='flex-end'
                         height='100%'
                     >
-                        <Button variant='outlined' color='primary' size='large' disabled={btnValue === ''} onClick={handleInvite}>Invite Party</Button>
-                        <Button variant='outlined' color='primary' size='large' disabled={btnValue === ''}>{btnValue}</Button>
+                        {/* invite party btn */}
+                        <InvitePartyModal fetchedPayee={payee} />
+
+                        {/* store payment btn */}
+                        <Button variant='outlined' color='primary' size='large' disabled={!payable} onClick={handlePayment}>Send Payment</Button>
+
+                        {/* approve btn */}
+                        {/* <Button variant='outlined' color='primary' size='large' disabled={btnValue === ''}>{btnValue}</Button> */}
                     </Box>
                 </Grid>
                 <Grid item xs={12} md={12} lg={12}>

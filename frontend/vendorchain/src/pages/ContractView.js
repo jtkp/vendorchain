@@ -32,10 +32,10 @@ const ContractView = () => {
     const [btnValue, setBtnValue] = React.useState('');
 
     const handleApprove = (e) => {
-        const body = {
+        const body = JSON.stringify({
             payeeAddress: payee.address,
             index: contract.index,
-        }
+        })
         
         makeAPIRequest(`/contracts/${params.address}/approve`, 'PUT', null, null, body)
             .then(res => {
@@ -67,15 +67,6 @@ const ContractView = () => {
                 else setBtnValue('No Action Required');
 
             }).then(
-                // fetch conditions
-
-                // makeAPIRequest(`conditions/${params.address}`, 'GET', null, null, null)
-                // .then(res => setConditions(res))
-                // .catch(err => {
-                //     console.log(err);
-                //     alert("Error fetching conditions");
-                // })
-
                 // fetch payee
                 makeAPIRequest(`payee/${params.address}`, 'GET', null, null, null)
                     .then(res => setPayee(res))
@@ -151,9 +142,14 @@ return (
                         flexDirection='column'
                         width='100%'
                     >
+                        <ul>
                         {
-                            conditions.map((c, idx) => <Conditionsitem condition={c} idx={idx} key={idx} removeCondition={removeCondition} />)
+                            contract.conditions.map((c, idx) => (
+                                <li key={idx}>{c.category}, {c.operator}, {c.value}</li>
+                            ))
                         }
+
+                        </ul>
                     </Box>
 
 

@@ -1,12 +1,12 @@
 version: '3'
 services:
-  ganache:
-    image: 'trufflesuite/ganache-cli'
-    container_name: 'ganache'
-    ports:
-      - 8545:8545
-    expose:
-      - "8545"
+  # ganache:
+  #   image: 'trufflesuite/ganache-cli'
+  #   container_name: 'ganache'
+  #   ports:
+  #     - 8545:8545
+  #   expose:
+  #     - "8545"
   postgres:
     image: 'postgres'
     container_name: 'postgres'

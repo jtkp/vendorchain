@@ -16,11 +16,12 @@ import {
 import { useTheme } from '@material-ui/core/styles';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 import makeAPIRequest from '../../Api';
+import { useParams } from 'react-router-dom';
 
-const InvitePartyModal = () => {
+const InvitePartyModal = ({ fetchedPayee }) => {
   const params = useParams();
   const [open, setOpen] = React.useState(false);
-  const [payee, setPayee] = React.useState();
+  const [payee, setPayee] = React.useState(fetchedPayee);
   const [vendors, setVendors] = React.useState([]);
 
   const theme = useTheme();
@@ -56,10 +57,10 @@ const InvitePartyModal = () => {
 
   // Handler for submitting the name to the new game
   const handleSubmit = () => {
-    const body = {
+    const body = JSON.stringify({
       contractAddress: params.address,
       partyAddress: payee.address
-    }
+    })
     makeAPIRequest('/contract/payee', 'POST', null, null, body)
       .then(res => {
         alert("Successfully invite payee " + payee.name);
@@ -80,6 +81,7 @@ const InvitePartyModal = () => {
         onClick={handleClickOpen}
         variant="outlined"
         color="primary"
+        disable={payee === undefined}
       >
         Create a new contract
       </Button>

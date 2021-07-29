@@ -27,24 +27,33 @@ contract Vendor {
 
     bool public satisfied = false;
     
-    // Allows custom conditions and length,
-    // but will require multiple small transactions to populate list of conditions.
-    struct Conditions {
-        int value;
-        int operator;
-        string name;
-    }
-    Conditions[] public conditionArray;
-    mapping (string => int) private operators;
+    // List of conditions
+    string[8] public names;
+    int[8] public values;
+    int[8] public operators;
+    mapping (string => int) private convert;
+    uint private conditionCount = 0;
     
     // Block calculation.
     uint constant blocksDaily = 6400;                       // Average blocks mined per day
 
     // Values that conditions will check to see if it is satisfied.
     mapping (uint => int) private cumulative;       // sums all values received during the contract, same length as conditionArray
-    int private count;                              // keeps track of how many times values were received
+    int private count = 0;                          // keeps track of how many times values were received
 
     event State(address indexed sender, bool isSatisfied, string message);
+    event Details(address client, 
+                  address payee, 
+                  uint startDate, 
+                  uint expiryDate, 
+                  uint amount, 
+                  uint prevBillingDate, 
+                  uint nextBillingDate, 
+                  uint contractHash, 
+                  string[8] names, 
+                  int[8] values, 
+                  int[8] operators);
+    event Log(string message, uint whatever);
 
     ////////////////////////////////////////////
     ////////////// INITIALISATION //////////////
@@ -53,8 +62,8 @@ contract Vendor {
     function init(address _client, uint _expiredOn, uint _startDate, uint _contractHash, uint _amount) public {
         admin = msg.sender;
         client = payable(_client);
-        expiryDate = _expiredOn;
-        startDate = _startDate;
+        expiryDate = calcDate(_expiredOn);
+        startDate = 0;
         prevBillingDate = calcDate(_startDate);
         nextBillingDate = calcDate(_startDate + 30);
         contractHash = _contractHash;
@@ -62,13 +71,14 @@ contract Vendor {
         initOperators();
     }
 
+    
     function initOperators() private {
-        operators['>'] = 1;
-        operators['=='] = 2;
-        operators['=>'] = 3;
-        operators['<'] = 4;
-        operators['!='] = 5;
-        operators['<='] = 6;
+        convert['>'] = 1;
+        convert['=='] = 2;
+        convert['>='] = 3;
+        convert['<'] = 4;
+        convert['!='] = 5;
+        convert['<='] = 6;
     }
 
     // Calculate the block number equivalent to a timestamp.
@@ -77,12 +87,18 @@ contract Vendor {
     }
     
     function setConds(string[8] memory _names, int[8] memory _values, string[8] memory _operators) external atStage(Stages.Initialising) {
+        emit Log("inside setConds, current stage is:", uint(stage));
         for (uint i = 0; i < 8; i++) {
-            if (bytes(_names[i]).length == 0) {
+            if (keccak256(bytes(_names[i])) == keccak256(bytes("0"))) {
+                emit Log("inside setConds if statement, current stage is:", uint(stage));
                 endInitStage();
+                emit Log("inside setConds if statement, after endInitStage, current stage is:", uint(stage));
                 return;     // break out of loop when received condition name equals "None"
             }
-            conditionArray.push(Conditions(_values[i], operators[_operators[i]], _names[i]));
+            names[i] = _names[i];
+            values[i] = _values[i];
+            operators[i] = convert[_operators[i]];
+            conditionCount++;
         }
     }
 
@@ -91,10 +107,11 @@ contract Vendor {
     }
 
     function endInitStage() public atStage(Stages.Initialising) {
+        emit Log("inside endInitStage, current stage is:", uint(stage));
         stage = Stages.Pending;
 
         // initialise the service data mapping
-        for (uint i = 0; i < conditionArray.length; i++) {
+        for (uint i = 0; i < 8; i++) {
             cumulative[i] = 0;
         }
     }
@@ -114,8 +131,8 @@ contract Vendor {
     ////////// DEPLOYED FUNCTIONALITY //////////
     ////////////////////////////////////////////
 
-    function getDetails() external view returns (address, address, uint, uint, uint, uint, uint, uint) {
-        return (client, payee, startDate, expiryDate, amount, prevBillingDate, nextBillingDate, contractHash);
+    function getDetails() external view returns (address, address, uint, uint, uint, uint, uint, uint, string[8] memory, int[8] memory, int[8] memory) {
+        return (client, payee, startDate, expiryDate, amount, prevBillingDate, nextBillingDate, contractHash, names, values, operators);
     }
 
     function storePayment() external payable atStage(Stages.Active) checkBillingDate() {
@@ -129,17 +146,19 @@ contract Vendor {
     }
     
     function payVendor() private {
+        satisfied = true;
         payee.transfer(amount);
         setNewDates();
     }
     
     function refund() private {
+        satisfied = false;
         client.transfer(amount);
         setNewDates();
     }
 
     function setNewDates() private checkExpiry() {
-        satisfied = false;
+        //satisfied = false;
         prevBillingDate = nextBillingDate;
         nextBillingDate = nextBillingDate + 30 * blocksDaily;
     }
@@ -148,17 +167,24 @@ contract Vendor {
     // Sums up data received and counts how much of each.
     // Assumes data for each condition are received at the same time.
     function receiveServiceData(int[] memory _cumulative) external atStage(Stages.Active) checkBillingDate() {
-        for (uint i = 0; i < _cumulative.length; i++) {
+        for (uint i = 0; i < conditionCount; i++) {
             cumulative[i] += _cumulative[i];
         }
         count++;
     }
     
+    function receiveServiceDataBypass(int[] memory _cumulative) external atStage(Stages.Active) {
+        for (uint i = 0; i < conditionCount; i++) {
+            cumulative[i] += _cumulative[i];
+        }
+        count++;
+    }
+
     // Calculates if the contract terms have been satisfied after next billing date has been passed.
-    function isSatisfied() private atStage(Stages.Active) {
-        for (uint i = 0; i < conditionArray.length; i++) {
-            int operator = conditionArray[i].operator;
-            int value = conditionArray[i].value;
+    function isSatisfied() public atStage(Stages.Active) {
+        for (uint i = 0; i < conditionCount; i++) {
+            int operator = operators[i];
+            int value = values[i];
             int _toCheck = cumulative[i]/count;
             
             if (!condValid(operator, _toCheck, value)) {
@@ -231,15 +257,17 @@ contract Vendor {
 
     // Cannot be expired.
     modifier checkExpiry() {
-        if (block.number < expiryDate) {
-            _;
+        if (block.number >= expiryDate) {
+            stage = Stages.Expired;  
         }
-        stage = Stages.Expired;
+        _;        
     }
 
     // Has to be in the correct state.
     modifier atStage(Stages _stage) {
-        require(stage == _stage, "Contract is not in the required state");
+        emit Log("inside atStage, current stage is:", uint(stage));
+        emit Log("still inside atStage, trying to compare it to:", uint(_stage));
+        require(uint(stage) == uint(_stage), "Contract is not in the required state");
         _;
     }
 
