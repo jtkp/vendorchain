@@ -9,6 +9,7 @@ const pool = new Pool({
 })
 
 const eth = require("./smart_contracts/eth");
+const crypto = require("crypto");
 
 // track the number of registered users
 let num_user = 0;
@@ -115,21 +116,16 @@ const getPayeeByContractAddress = (request, response) => {
 
 /* ================================ Contracts ================================*/
 
-// get contract by a specific contract id - call functions - justin
+// get contract by address
 const getContractByAddress = async (request, response) => {
   try{
     const contractAddress = request.params.address;
 
     const accounts = await eth.accounts();
     const managerAccount = accounts[0];
-    console.log("Fetched manager account");
     const Vendor = await eth.Vendor(contractAddress)
     const res = await Vendor.methods.getDetails().call({"from": managerAccount});
-    //const newVendorContractAddress = res.events.ClonedContract.returnValues._cloned;
-    
-    // TODO: Retrieve conditions from DB
 
-    console.log(res);
     const client = res['0']
     const payee = res['1']
     const startDate = res['2']
@@ -141,9 +137,9 @@ const getContractByAddress = async (request, response) => {
     const names = res['8']
     const values = res['9']
     const operators = res['10']
-    // (client, payee, startDate, expiryDate, amount, prevBillingDate, nextBillingDate, contractHash);
     response.status(200).send(
-      { client
+      { contractAddress
+      , client
       , payee
       , startDate
       , expiryDate
@@ -165,9 +161,7 @@ const getContractByAddress = async (request, response) => {
 
 // get all contracts created by a specific user - katrina
 const getContractsByUserAddress = (request, response) => {
-  // get parameters from url
   const address = request.params.userAddress;
-
   pool.query('SELECT * FROM contract WHERE owner = $1', [address], (error, results) => {
     if (error) {
       response.status(400).json(error);
@@ -177,7 +171,8 @@ const getContractsByUserAddress = (request, response) => {
   })
 }
 
-// get contracts that - katrina
+// API: /contracts/payee/:address
+// Get all contracts with the payee :address
 const getContractsByPayeeAddress = (request, response) => {
   const payee = request.params.address;
   pool.query('SELECT c.address, c.title, c.description, c.owner FROM party p JOIN contract c on c.address = p.address WHERE p.address = $1', [payee], (error, results) => {
@@ -189,22 +184,19 @@ const getContractsByPayeeAddress = (request, response) => {
   })
 }
 
-// get if the contract is payable
+// Get if the contract is payable
 const getContractPayable = (request, response) => {
   response.status(200).json({ status: true })
   response.status(400).json(error);
 }
 
-// invite parties to a contract  - call functions - justin
+// Invite a payee with the address "partyAddress to the contract"
 const inviteParty = async (request, response) => {
   const {contractAddress, partyAddress} = request.body;
-
   const accounts = await eth.accounts();
   const managerAccount = accounts[0];
-
   const Vendor = await eth.Vendor(contractAddress);
   await Vendor.methods.setPayee(partyAddress).send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
-
   pool.query('INSERT INTO party (payee, address) VALUES ($1, $2) returning *', [partyAddress, contractAddress], (error, results) => {
     if (error) {
       response.status(400).json(error);
@@ -214,27 +206,15 @@ const inviteParty = async (request, response) => {
   })
 }
 
-// approve a contract
+// If a payee with address "payeeAddress" has received the invite
+// they can approve to terms of the contract
 const approveContract = async (request, response) => {
   try {
     const contractAddress = request.params.address;
     const { payeeAddress, index } = request.body;
-    const accounts = await eth.accounts();
-    const managerAccount = accounts[0];
-
-    const Vendor = await eth.Vendor(contractAddress);
-    let payee = await Vendor.methods.stage().call({from: payeeAddress});
-    console.log(payee);
-    // await Vendor.methods.endInitStage().send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
-    payee = await Vendor.methods.payee().call({from: payeeAddress});
-    console.log(payee);
-    payee = await Vendor.methods.payeeApproved().call({from: payeeAddress});
-    console.log(payee);
     const VendorFactory = await eth.VendorFactory();
-    const result = await VendorFactory.methods.approve(contractAddress, index).send({'from': payeeAddress, gasPrice: 1000, gas: 1000000});
-    payee = await Vendor.methods.payeeApproved().call({from: payeeAddress});
-    console.log(payee);
-    response.status(200).json({"status": "success"});
+    await VendorFactory.methods.approve(contractAddress, index).send({'from': payeeAddress, gasPrice: 1000, gas: 1000000});
+    response.status(200).json({"msg": `Vendor ${payeeAddress} successfully approved contract ${contractAddress}`});
   } catch(err){
     console.log("error")
     response.status(400).json(err);
@@ -242,7 +222,9 @@ const approveContract = async (request, response) => {
 
 }
 
-// create a contract  - call functions - daigo
+// Used to create a contract. The conditions of the contract are
+// set using the function "sendCondition" and 
+// the payee is set using the function "inviteParty"
 const createContract = async (request, response) => {
   const { title
         , description 
@@ -260,46 +242,41 @@ const createContract = async (request, response) => {
       );
       
       const index = results.rows[0].index;
-      console.log("Retrieved contract index");
-      const hash = 100;
-      
+      const _hash = crypto.createHash('sha256').update(description).digest('hex');
+      const hash = parseInt(_hash);
+      console.log(hash)
       const VendorFactory = await eth.VendorFactory();
-      
-      console.log("Retrieved Vendor Factory")
       const accounts = await eth.accounts();
       const managerAccount = accounts[0];
-
-      console.log("Retrieved accounts");
-
-      console.log("Before create contract")
-
       let res = await VendorFactory.methods.createVendor(client, expiryDate, startDate, hash, amount, index)
       .send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
-
       const newVendorContractAddress = res.events.ClonedContract.returnValues._cloned;
       results = await pool.query("UPDATE contract SET address = $1 WHERE index = $2",[newVendorContractAddress, index])
-      
-      response.status(200).json({ status: "success" });
+      response.status(200).json({ "contractAddress": newVendorContractAddress, "index":index });
 
   } catch(err){
-    console.log("error");
     console.log(err);
     response.status(400).json(err);
   }
 }
 
+// Send conditions in the form [{category:string, operator:string, value:number}]
+// Eg. bandwidth > 100, port = 1
+// [ { "category": "bandwidth", "operator": ">", "value": 100 }
+//   { "category": "port", "operator": "==", "value": 1 }
+// ]
 const sendConditions = async (request,response) => {
   try{
     const index = request.params.index;
     const {conditions} = request.body;
-    
+    // Find address of contract to set conditions of
     let results = await pool.query
     ( " SELECT address FROM contract WHERE index = $1"
     , [index]
     );
-    console.log(results.rows[0].address);
     const contractAddress = results.rows[0].address;
-    
+    // Convert condition to a list of names, values and operators
+    // so that we can pass it into our contract
     const names = [];
     const values = [];
     const operators = [];
@@ -315,46 +292,47 @@ const sendConditions = async (request,response) => {
       values[i] = conditions[i]['value'];
       operators[i] = conditions[i]['operator'];
     }
-    console.log("Conditions to arrays")
     const Vendor = await eth.Vendor(contractAddress);
-    console.log("Fetched vendor");
+    
+    // Set the conditions in the contracts
     const accounts = await eth.accounts();
     const managerAccount = accounts[0];
     const res = await Vendor.methods.setConds(names, values, operators).send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
-    console.log("Set conditions")
+    
+    // Also store the condition in the DB for easier retrieval
     for (var i = 0; i < conditions.length; i++) {
       await pool.query
       ( "INSERT INTO condition (address, name, operator, value) VALUES ($1,$2,$3,$4)" 
       , [contractAddress, names[i], operators[i], values[i]]
       )
     }
-
-    response.status(200).json({ msg: `Successfully set conditions to  ${contractAddress}` });
+    response.status(200).json({ msg: `Successfully set conditions to ${contractAddress}` });
   }catch(err){
     console.log("error");
     response.status(400).json({ msg: `Failed to set conditions`});
   }
 }
 
-// update contracts with contract id  - call functions - justin
+// Update a contract. Creates a new copy of the original and 
+// updates the in the new copy fields. 
 const updateContract = async (request, response) => {
 
-const index = request.params.index;
+  const index = request.params.index;
 
-const { title
-  , description 
-  , client
-  , expiryDate
-  , startDate
-  , amount 
-  , conditions
-  } = request.body
+  const { title
+        , description 
+        , client
+        , expiryDate
+        , startDate
+        , amount 
+        , conditions
+        } = request.body
 
-try{
-    
-    const hash = 100;
+  try{
+      
+    const _hash = crypto.createHash('sha256').update(description).digest('hex');
+    const hash = parseInt(_hash);
     const VendorFactory = await eth.VendorFactory();
-
     const accounts = await eth.accounts();
     const managerAccount = accounts[0];
 
@@ -364,17 +342,21 @@ try{
     );
     
     const originalAddress = results.rows[0].address
-    console.log(`Original address is ${originalAddress}`);
 
-    let res = await VendorFactory.methods.createVendor(client, expiryDate, startDate, hash, amount, index)
-    .send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
+    // Create a copy of the original contract
+    let res = await VendorFactory.methods
+              .createVendor(client, expiryDate, startDate, hash, amount, index)
+              .send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
 
     const newVendorContractAddress = res.events.ClonedContract.returnValues._cloned;
-    console.log("Created new updated contract");
+    
+    // Pass the new conditions into the new copy
     const names = [];
     const values = [];
     const operators = [];
 
+    // Following is required to pad the input.
+    // The number of conditions is fixed to 8.
     for (var i = 0;  i < 8; i++) {
       names[i] = '0';
       values[i] = 0;
@@ -389,22 +371,20 @@ try{
 
     const Vendor = await eth.Vendor(newVendorContractAddress);
     res = await Vendor.methods.setConds(names, values, operators).send({"from": managerAccount, gasPrice: 1000, gas: 1000000});
-    console.log("Set conditions of updated contract");
+    
+    // Delete conditions associated to the original contract from the DB
     results = await pool.query
     ( "DELETE FROM condition WHERE address = $1"
     , [originalAddress]
     );
-    console.log("Deleted conditions");
     
-    //results = await pool.query("UPDATE contract SET address = $1 WHERE index = $2",[newVendorContractAddress, index])
-
+    // Updates the info of our contract
     results = await pool.query
     ( "UPDATE contract SET title=$1, description=$2,address=$3 WHERE index = $4"
     , [title, description, newVendorContractAddress,index]
     );
 
-    console.log("Updated contract address");
-
+    // Store the contract of the 
     for (var i = 0; i < conditions.length; i++) {
       await pool.query
       ( "INSERT INTO condition (address, name, operator, value) VALUES ($1,$2,$3,$4)" 
@@ -422,74 +402,69 @@ try{
 
 }
 
-// store payment in the contract
-// Send payment
+// For the client to store payment in contract.
+// If the contract is satisfied the vendor will receive the payment
+// Otherwise, the client will receive a refund.
 const storePayment = async (request, response) => {
   try{
     const contractAddress = request.params.address;
     const {client} = request.body;
-  
     const Vendor = await eth.Vendor(contractAddress);
     const amount = await Vendor.methods.amount().call({from: client});
-    console.log(amount);
-
     res = await Vendor.methods.storePayment().send({"from": client, value: amount,gasPrice: 1000, gas: 1000000});
-    
-    response.status(200).json({msg: `Sent ${amount} to ${client}`});
+    response.status(200).json({msg: `Client ${client} successfully sent ${amount} wei into contract ${contractAddress}`});
   }catch(err){
     response.status(400).json(err);
   }
 }
 
+// For demonstration purposes. Check if the conditions
+// of the contract are satisfies. This check is
+// automatically performed by the contract.
 const checkSatisfy = async (request,response) => {
   try{
     const contractAddress = request.params.address;
     const { client }= request.body;
     const Vendor = await eth.Vendor(contractAddress);
     let satisfied = await Vendor.methods.satisfied().call({from:client});
-    console.log(`Is satisfied before ${satisfied}`);
     const res = await Vendor.methods.isSatisfied().send({"from": client, gasPrice: 1000, gas: 1000000});
     satisfied = await Vendor.methods.satisfied().call({from:client});
-    console.log(`Is satisfied after ${satisfied}`);
-    console.log(res);
     response.status(200).json({msg: `satisfy is ${res}`});
-  
+
   }catch(err){
     response.status(400).json(err);
   }
 }
 
+// Send data from a vendor service.
 const sendData = async (request, response) => {
   try{
     const contractAddress = request.params.address;
     const { values }= request.body; // values: int[8]
-    // TODO: Padding
-    // TODO: Verify source
     const accounts = await eth.accounts();
     const managerAccount = accounts[0];
     const Vendor = await eth.Vendor(contractAddress);
     const res = await Vendor.methods.receiveServiceData(values).send({from:managerAccount, gasPrice: 1000, gas: 1000000});
     console.log("Sent data");
     console.log(res);
-    response.status(200).json({msg: `Sent data to ${contractAddress}`});
+    response.status(200).json({msg: `Successfully sent data to ${contractAddress}`});
   }catch(err){
     response.status(400).json(err);
   }
 }
 
+// For demonstration purposes. Can bypass the billing period check.
 const sendDataBypass = async (request, response) => {
   try{
     const contractAddress = request.params.address;
     const { values }= request.body; // values: int[8]
-    // TODO: Padding
-    // TODO: Verify source
     const accounts = await eth.accounts();
     const managerAccount = accounts[0];
     const Vendor = await eth.Vendor(contractAddress);
     const res = await Vendor.methods.receiveServiceDataBypass(values).send({from:managerAccount, gasPrice: 1000, gas: 1000000});
     console.log("Sent data");
     console.log(res);
-    response.status(200).json({msg: `Sent data to ${contractAddress}`});
+    response.status(200).json({msg: `Successfully sent data to ${contractAddress}`});
   }catch(err){
     response.status(400).json(err);
   }
