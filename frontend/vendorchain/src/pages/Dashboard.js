@@ -4,17 +4,13 @@ import React from 'react';
 import Title from '../components/Titles/Title';
 import Subtitle from '../components/Titles/Subtitle';
 import CreateContractModal from '../components/Modals/CreateContractModal';
-import ImportModal from '../components/Modals/ImportModal';
 
 import {
   List,
-  ListItem,
-  ListItemSecondaryAction,
   ListItemText,
   IconButton,
 } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
-import DeleteIcon from '@material-ui/icons/Delete';
 import makeAPIRequest from '../Api';
 
 

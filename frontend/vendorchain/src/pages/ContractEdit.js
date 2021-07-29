@@ -79,11 +79,7 @@ const ContractEdit = () => {
         makeAPIRequest(`contract/${params.address}`, 'GET', null, null, null) 
             .then(res => {
                 console.log(res);
-
                 setContract(res);
-                // if (res.stages === 1) setBtnValue('Approve');
-                // else if (res.stages === 3) setBtnValue('Approved');
-                // else setBtnValue('No Action Required');
                 return res;
             }).then(res => {
                 // set conditions
@@ -139,7 +135,7 @@ return (
                     <Typography variant='body2'>{contract.client}</Typography>
                     <hr />
                     <Typography variant='h6'>Contract Address</Typography>
-                    <Typography variant='body2'>{contract.address}</Typography>
+                    <Typography variant='body2'>{params.address}</Typography>
                     <hr />
                     <Typography variant='h6'>State</Typography>
                     <Typography variant='body2'>{contract.stages}</Typography>
